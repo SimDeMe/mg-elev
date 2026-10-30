@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kalender – MG Intern</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-side="kalender" data-root="../">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="hero lille">
+      <div class="wrap">
+        <div class="kicker">Kalender</div>
+        <h1>Skolens kalender</h1>
+        <p>Ferier, temadage, eksamensperioder, afleveringer og fællesarrangementer for hele skolen.</p>
+      </div>
+    </section>
+
+    <div class="wrap">
+      <div class="kalender-bar">
+        <p style="margin:0;color:var(--daempet)">Din personlige kalender og dit skema finder du stadig i Lectio.</p>
+        <a id="kalender-link" class="knap sekundaer" href="#" target="_blank" rel="noopener">Åbn i nyt vindue ↗</a>
+      </div>
+      <div class="kalender-ramme">
+        <iframe id="kalender-frame" title="Middelfart Gymnasiums kalender" loading="lazy"></iframe>
+      </div>
+      <p class="udkast"><strong>Note til demoen:</strong> Kalenderen er indlejret fra den eksisterende løsning på smbi.dk. Adressen rettes i <code>assets/config.js</code>. Hvis kalenderen ikke vises her, kan den åbnes med knappen ovenfor.</p>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="../assets/config.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    var url = window.MG_CONFIG.kalenderUrl;
+    document.getElementById("kalender-frame").src = url;
+    document.getElementById("kalender-link").href = url;
+  </script>
+</body>
+</html>

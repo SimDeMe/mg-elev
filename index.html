@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MG Intern – Middelfart Gymnasium</title>
+  <meta name="description" content="Intern overbliksside for elever og lærere på Middelfart Gymnasium.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-side="forside" data-root="">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="kicker">For elever og lærere</div>
+        <h1>Alt det praktiske – ét sted</h1>
+        <p>Kalender, værktøjer og information om forløb og arrangementer på Middelfart Gymnasium. Ingen login, ingen personoplysninger.</p>
+        <div class="soeg-boks">
+          <input id="soeg" type="search" aria-label="Søg på siden" placeholder="Søg fx “SRP”, “pdf”, “Operation Dagsværk”…" autocomplete="off">
+          <ul id="soeg-resultater" hidden></ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="wrap">
+      <div class="grid genveje">
+        <a class="kort" href="sider/kalender.html">
+          <div class="ikon" aria-hidden="true">📅</div>
+          <h3>Kalender</h3>
+          <p>Skolens fælles kalender med ferier, temadage, eksamensperioder og arrangementer.</p>
+          <span class="mere">Åbn kalender →</span>
+        </a>
+        <a class="kort" href="sider/vaerktoejer.html">
+          <div class="ikon" aria-hidden="true">🛠️</div>
+          <h3>Værktøjer</h3>
+          <p>PDF-værktøjer og små hjælpere til undervisning og afleveringer.</p>
+          <span class="mere">Se værktøjer →</span>
+        </a>
+        <a class="kort" href="sider/forloeb.html">
+          <div class="ikon" aria-hidden="true">🧩</div>
+          <h3>Flerfaglige forløb</h3>
+          <p>AT, SRO, SRP, DHO, SSO, NV og AP – hvad, hvornår og hvordan.</p>
+          <span class="mere">Læs om forløbene →</span>
+        </a>
+        <a class="kort" href="sider/arrangementer.html">
+          <div class="ikon" aria-hidden="true">🎉</div>
+          <h3>Arrangementer</h3>
+          <p>Operation Dagsværk, aktivitetsdag, introdage, fester og studieture.</p>
+          <span class="mere">Se arrangementer →</span>
+        </a>
+      </div>
+
+      <div class="to-kol" style="margin-top:8px">
+        <section>
+          <h2>Kommende</h2>
+          <div class="kort">
+            <ul class="liste">
+              <li><div class="dato">5<small>nov</small></div><div><strong>Operation Dagsværk</strong><span>Eleverne arbejder en dag og donerer lønnen. Ingen almindelig undervisning.</span></div></li>
+              <li><div class="dato">20<small>nov</small></div><div><strong>Aflevering af SRO (2g)</strong><span>Afleveres digitalt i Lectio senest kl. 12.00.</span></div></li>
+              <li><div class="dato">12<small>dec</small></div><div><strong>Aktivitetsdag</strong><span>Hele skolen er sammen om idræt, leg og konkurrencer.</span></div></li>
+              <li><div class="dato">19<small>dec</small></div><div><strong>Juleafslutning</strong><span>Fællessamling i hallen. Sidste skoledag før juleferien.</span></div></li>
+            </ul>
+          </div>
+          <p class="udkast"><strong>Udkast:</strong> Datoerne er eksempler til demoen. I den færdige version hentes de direkte fra skolens kalender.</p>
+        </section>
+
+        <aside>
+          <h2>Hurtige links</h2>
+          <div class="kort">
+            <ul class="liste">
+              <li><div><strong><a data-link="lectio" href="#">Lectio</a></strong><span>Skema, lektier, afleveringer og beskeder</span></div></li>
+              <li><div><strong><a data-link="office" href="#">Office 365</a></strong><span>Mail, Teams og OneDrive</span></div></li>
+              <li><div><strong><a href="sider/praktisk.html#eksamen">Eksamen</a></strong><span>Regler, sygdom og snyd</span></div></li>
+              <li><div><strong><a href="sider/praktisk.html#hjaelp">Brug for hjælp?</a></strong><span>Studievejledning, lektiecafé og trivsel</span></div></li>
+              <li><div><strong><a data-link="skolensHjemmeside" href="#">Skolens hjemmeside</a></strong><span>Den officielle side udadtil</span></div></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <section class="sektion">
+        <h2>Hvad er MG Intern?</h2>
+        <p>MG Intern er et internt opslagsværk for elever og lærere. Her samler vi de værktøjer og den information, som ellers ligger spredt i mails, Lectio-beskeder og PowerPoints – så det er nemt at finde, når man har brug for det.</p>
+        <p>Siden er åben for alle og har derfor <strong>ingen personoplysninger</strong>: ingen navne, klasselister, skemaer eller karakterer. Det hører hjemme i Lectio.</p>
+      </section>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/config.js"></script>
+  <script src="assets/site.js"></script>
+</body>
+</html>
