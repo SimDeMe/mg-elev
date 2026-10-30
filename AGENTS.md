@@ -61,7 +61,11 @@ assets/config.js      Alle eksterne URL'er
 assets/kalender.js    Kalendervisning + "Kommende" på forsiden (data-kal-*)
 assets/kalender-data.js GENERERET – kalenderens data fra smbi
 tools/opdater-kalender.mjs Henter kalenderdata fra smbi.dk
+vaerktoejer/          Selvstændige lærerværktøjer, hver i sin mappe med index.html
+                      (bordgrupper, normer, eksamensbelastning, turnering, rejsekasse)
 ```
+
+Værktøjerne i `vaerktoejer/` er flyttet fra kemiformler.dk/MG (Niels) og har deres eget udseende uden fælles header. De gemmer kun i brugerens egen browser (localStorage). Rejsekassen og normerne kan lægges på hjemmeskærmen (manifest og service worker i mappen). Kortene står under "Til lærerne" i `sider/vaerktoejer.html`.
 
 ### Kalenderen
 
