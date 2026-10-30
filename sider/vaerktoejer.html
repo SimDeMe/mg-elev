@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Værktøjer – MG Intern</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-side="vaerktoejer" data-root="../">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="hero lille">
+      <div class="wrap">
+        <div class="kicker">Værktøjer</div>
+        <h1>Værktøjer</h1>
+        <p>Små, gratis værktøjer til afleveringer og undervisning. Filerne behandles i din egen browser – de sendes ikke videre.</p>
+      </div>
+    </section>
+
+    <div class="wrap">
+      <ul class="side-nav">
+        <li><a href="#pdf">PDF-værktøjer</a></li>
+        <li><a href="#andre">Til undervisningen</a></li>
+        <li><a href="#systemer">Skolens systemer</a></li>
+      </ul>
+
+      <h2 id="pdf">PDF-værktøjer</h2>
+      <div class="grid" id="pdf-liste"></div>
+
+      <h2 id="andre">Til undervisningen</h2>
+      <div class="grid">
+        <div class="kort">
+          <div class="ikon" aria-hidden="true">⏱️</div>
+          <h3>Timer</h3>
+          <p>Nedtælling til gruppearbejde og oplæg. Skriv antal minutter og tryk start.</p>
+          <div style="display:flex;gap:.5rem;align-items:center;margin-top:auto">
+            <input id="timer-min" type="number" min="1" max="180" value="10" aria-label="Minutter" style="width:5rem;padding:.5rem;border:1px solid var(--kant);border-radius:8px;font:inherit">
+            <button id="timer-start" class="knap" type="button" style="border:0;cursor:pointer;font:inherit;font-weight:700">Start</button>
+            <strong id="timer-vis" style="font-size:1.4rem;font-variant-numeric:tabular-nums;margin-left:auto">10:00</strong>
+          </div>
+        </div>
+        <div class="kort">
+          <div class="ikon" aria-hidden="true">🎲</div>
+          <h3>Gruppedeler</h3>
+          <p>Indsæt deltagere (fx numre eller initialer – én pr. linje). Listen gemmes ikke.</p>
+          <textarea id="grp-input" rows="4" placeholder="1&#10;2&#10;3&#10;4" style="width:100%;padding:.5rem;border:1px solid var(--kant);border-radius:8px;font:inherit"></textarea>
+          <div style="display:flex;gap:.5rem;align-items:center;margin:.6rem 0">
+            <label for="grp-str" style="font-size:.9rem">Pr. gruppe</label>
+            <input id="grp-str" type="number" min="2" value="3" style="width:4rem;padding:.4rem;border:1px solid var(--kant);border-radius:8px;font:inherit">
+            <button id="grp-knap" class="knap sekundaer" type="button" style="border:0;cursor:pointer;font:inherit;font-weight:700;margin-left:auto">Del op</button>
+          </div>
+          <ol id="grp-ud" style="margin:0;padding-left:1.2rem;font-size:.95rem"></ol>
+        </div>
+        <div class="kort">
+          <div class="ikon" aria-hidden="true">🔢</div>
+          <h3>Tilfældigt tal</h3>
+          <p>Hvem starter? Træk et tal mellem 1 og antallet i klassen.</p>
+          <div style="display:flex;gap:.5rem;align-items:center;margin-top:auto">
+            <input id="rnd-max" type="number" min="2" value="28" aria-label="Højeste tal" style="width:5rem;padding:.5rem;border:1px solid var(--kant);border-radius:8px;font:inherit">
+            <button id="rnd-knap" class="knap" type="button" style="border:0;cursor:pointer;font:inherit;font-weight:700">Træk</button>
+            <strong id="rnd-ud" style="font-size:1.6rem;margin-left:auto">–</strong>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="systemer">Skolens systemer</h2>
+      <div class="grid">
+        <a class="kort" data-link="lectio" href="#">
+          <h3>Lectio ↗</h3>
+          <p>Skema, lektier, opgaver, fravær og beskeder.</p>
+        </a>
+        <a class="kort" data-link="office" href="#">
+          <h3>Office 365 ↗</h3>
+          <p>Skolemail, Teams, Word, OneDrive.</p>
+        </a>
+        <a class="kort" data-link="ug" href="#">
+          <h3>UddannelsesGuiden ↗</h3>
+          <p>Videregående uddannelser og adgangskrav.</p>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="../assets/config.js"></script>
+  <script src="../assets/site.js"></script>
+  <script>
+    // PDF-værktøjer fra config
+    document.getElementById("pdf-liste").innerHTML = window.MG_CONFIG.pdfVaerktoejer.map(function (v) {
+      return '<a class="kort" href="' + v.url + '" target="_blank" rel="noopener">' +
+        '<div class="ikon" aria-hidden="true">📄</div><h3>' + v.navn + '</h3><p>' + v.beskrivelse + '</p>' +
+        '<span class="mere">Åbn værktøj ↗</span></a>';
+    }).join("");
+
+    // Timer
+    var tid = null, slut = 0;
+    var vis = document.getElementById("timer-vis");
+    function fmt(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+    document.getElementById("timer-start").addEventListener("click", function () {
+      clearInterval(tid);
+      slut = Date.now() + document.getElementById("timer-min").value * 60000;
+      tid = setInterval(function () {
+        var rest = Math.max(0, Math.round((slut - Date.now()) / 1000));
+        vis.textContent = rest ? fmt(rest) : "Tiden er gået!";
+        if (!rest) clearInterval(tid);
+      }, 250);
+    });
+
+    // Gruppedeler
+    document.getElementById("grp-knap").addEventListener("click", function () {
+      var navne = document.getElementById("grp-input").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+      var str = Math.max(2, +document.getElementById("grp-str").value || 3);
+      for (var i = navne.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = navne[i]; navne[i] = navne[j]; navne[j] = t; }
+      var antal = Math.max(1, Math.round(navne.length / str)), grupper = [];
+      navne.forEach(function (n, i) { (grupper[i % antal] = grupper[i % antal] || []).push(n); });
+      var ud = document.getElementById("grp-ud");
+      ud.innerHTML = "";
+      grupper.forEach(function (g) { var li = document.createElement("li"); li.textContent = g.join(", "); ud.appendChild(li); });
+    });
+
+    // Tilfældigt tal
+    document.getElementById("rnd-knap").addEventListener("click", function () {
+      var max = Math.max(2, +document.getElementById("rnd-max").value || 28);
+      document.getElementById("rnd-ud").textContent = 1 + Math.floor(Math.random() * max);
+    });
+  </script>
+</body>
+</html>
