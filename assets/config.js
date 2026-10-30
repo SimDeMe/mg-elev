@@ -1,14 +1,14 @@
 // Alle eksterne links samlet ét sted. Ret her, så opdateres hele siden.
-// TODO: Indsæt de præcise adresser til kalenderen og PDF-værktøjerne på smbi.dk.
+// Kalenderens data ligger i assets/kalender-data.js (se tools/opdater-kalender.mjs).
 window.MG_CONFIG = {
-  kalenderUrl: "https://smbi.dk/",
   pdfVaerktoejer: [
-    { navn: "Saml PDF'er", beskrivelse: "Flet flere PDF-filer til én fil.", url: "https://smbi.dk/" },
-    { navn: "Opdel PDF", beskrivelse: "Del en PDF op i enkeltsider eller intervaller.", url: "https://smbi.dk/" },
-    { navn: "Komprimér PDF", beskrivelse: "Gør store PDF'er mindre, så de kan uploades i Lectio.", url: "https://smbi.dk/" },
-    { navn: "Billeder til PDF", beskrivelse: "Lav fotos af noter eller opgaver om til én PDF.", url: "https://smbi.dk/" }
+    { navn: "Beskær PDF", beskrivelse: "Skær kanter og tomme områder væk – fx fra scannede sider.", url: "https://smbi.dk/pdf-vaerksted/" },
+    { navn: "Del dobbeltsider", beskrivelse: "Del scannede opslag op i enkeltsider i den rigtige rækkefølge.", url: "https://smbi.dk/pdf-vaerksted/" },
+    { navn: "Søgbar tekst (OCR)", beskrivelse: "Gør en scannet PDF søgbar, så teksten kan markeres og kopieres.", url: "https://smbi.dk/pdf-vaerksted/" }
   ],
   links: {
+    smbiKalender: "https://smbi.dk/Skolekalender_2026-27.html",
+    pdfVaerksted: "https://smbi.dk/pdf-vaerksted/",
     lectio: "https://www.lectio.dk/",
     office: "https://www.office.com/",
     skolensHjemmeside: "https://middelfart-gym.dk/",

@@ -14,29 +14,43 @@
       <div class="wrap">
         <div class="kicker">Kalender</div>
         <h1>Skolens kalender</h1>
-        <p>Ferier, temadage, eksamensperioder, afleveringer og fællesarrangementer for hele skolen.</p>
+        <p>Ferier, prøver, studievalg, ture og arrangementer for hele skoleåret. Vælg dit hold for kun at se det, der gælder dig.</p>
       </div>
     </section>
 
-    <div class="wrap">
-      <div class="kalender-bar">
-        <p style="margin:0;color:var(--daempet)">Din personlige kalender og dit skema finder du stadig i Lectio.</p>
-        <a id="kalender-link" class="knap sekundaer" href="#" target="_blank" rel="noopener">Åbn i nyt vindue ↗</a>
+    <div class="wrap" id="kalender">
+      <div class="kal-panel">
+        <div class="kal-raekke">
+          <span class="kal-label">Hold</span>
+          <div class="kal-knapper" id="kal-hold" role="group" aria-label="Vælg hold"></div>
+          <div class="kal-knapper kal-visning" role="group" aria-label="Visning">
+            <button type="button" data-visning="liste">Liste</button>
+            <button type="button" data-visning="maaned">Måned</button>
+          </div>
+        </div>
+        <div class="kal-raekke">
+          <span class="kal-label">Vis</span>
+          <div class="kal-knapper kal-typer" id="kal-typer" role="group" aria-label="Typer af begivenheder"></div>
+        </div>
+        <div class="kal-raekke kal-bund">
+          <label class="kal-check"><input type="checkbox" id="kal-andre"> Vis også personalemøder og besøg</label>
+          <span class="kal-handlinger">
+            <button type="button" id="kal-ics" class="knap sekundaer">Hent til Outlook / telefon (.ics)</button>
+          </span>
+        </div>
+        <p class="kal-status" id="kal-status" role="status"></p>
       </div>
-      <div class="kalender-ramme">
-        <iframe id="kalender-frame" title="Middelfart Gymnasiums kalender" loading="lazy"></iframe>
-      </div>
-      <p class="udkast"><strong>Note til demoen:</strong> Kalenderen er indlejret fra den eksisterende løsning på smbi.dk. Adressen rettes i <code>assets/config.js</code>. Hvis kalenderen ikke vises her, kan den åbnes med knappen ovenfor.</p>
+
+      <div id="kal-indhold"></div>
+
+      <p class="udkast">Kalenderen <span id="kal-aar"></span> bygger på samme data som <a data-link="smbiKalender" href="#">skolekalenderen på smbi.dk</a> og opdateres med <code>node tools/opdater-kalender.mjs</code>. Ved tvivl er det skolens officielle kalender, der gælder.</p>
     </div>
   </main>
 
   <div id="site-footer"></div>
   <script src="../assets/config.js"></script>
+  <script src="../assets/kalender-data.js"></script>
   <script src="../assets/site.js"></script>
-  <script>
-    var url = window.MG_CONFIG.kalenderUrl;
-    document.getElementById("kalender-frame").src = url;
-    document.getElementById("kalender-link").href = url;
-  </script>
+  <script src="../assets/kalender.js"></script>
 </body>
 </html>

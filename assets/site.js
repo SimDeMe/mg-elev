@@ -15,8 +15,8 @@
 
   // Søgeindeks: titel, sti og nøgleord. Udvid når der kommer nyt indhold.
   var SOEG = [
-    { t: "Skolens kalender", h: "sider/kalender.html", k: "kalender datoer begivenheder ferie skema uge" },
-    { t: "PDF-værktøjer", h: "sider/vaerktoejer.html#pdf", k: "pdf saml flet opdel komprimer billeder scan" },
+    { t: "Skolens kalender", h: "sider/kalender.html", k: "kalender datoer begivenheder ferie prøver eksamen studietur ics outlook 1g 2g 3g hf" },
+    { t: "PDF-værktøjer", h: "sider/vaerktoejer.html#pdf", k: "pdf beskær del dobbeltsider ocr søgbar scan værksted" },
     { t: "Andre værktøjer", h: "sider/vaerktoejer.html#andre", k: "timer gruppe generator tilfældig lectio office" },
     { t: "AT – Almen studieforberedelse", h: "sider/forloeb.html#at", k: "at almen studieforberedelse stx synopsis" },
     { t: "SRO / SRP", h: "sider/forloeb.html#srp", k: "sro srp studieretningsopgave studieretningsprojekt opgave vejleder" },

@@ -50,7 +50,7 @@ Er du i tvivl, så **lad det være ude** og spørg en ansvarlig voksen på skole
 
 ```
 index.html            Forside med genveje og overblik
-sider/kalender.html   Skolens kalender (indlejret fra smbi.dk)
+sider/kalender.html   Skolens kalender (liste/måned, filter pr. hold, .ics)
 sider/vaerktoejer.html PDF-værktøjer og andre værktøjer
 sider/forloeb.html    Flerfaglige forløb
 sider/arrangementer.html Operation Dagsværk, aktivitetsdag m.m.
@@ -58,7 +58,21 @@ sider/praktisk.html   Praktisk info, eksamen, IT, links
 assets/style.css      Al styling (farver som CSS-variabler i :root)
 assets/site.js        Fælles header, navigation, footer, søgning
 assets/config.js      Alle eksterne URL'er
+assets/kalender.js    Kalendervisning + "Kommende" på forsiden (data-kal-*)
+assets/kalender-data.js GENERERET – kalenderens data fra smbi
+tools/opdater-kalender.mjs Henter kalenderdata fra smbi.dk
 ```
+
+### Kalenderen
+
+Kalenderens kilde er `skolekalender/data.js` i repoet SimDeMe/smbi (smbi.dk). Den rettes **dér**, og hentes herover med:
+
+```
+node tools/opdater-kalender.mjs                      # fra smbi.dk
+node tools/opdater-kalender.mjs ../smbi/skolekalender/data.js   # fra lokal kopi
+```
+
+`assets/kalender-data.js` må ikke rettes i hånden. Kalenderen må kun indeholde fælles begivenheder for hold, klasser og personale – aldrig navne på elever eller enkeltpersoner.
 
 ### Konventioner
 

@@ -200,3 +200,81 @@ ol.trin li::before {
 .site-footer li { margin-bottom: .3rem; }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 32px; }
 @media (max-width: 800px) { .footer-grid { grid-template-columns: 1fr; } }
+
+/* Kalender */
+.kal-panel {
+  background: var(--flade); border: 1px solid var(--kant); border-radius: var(--radius);
+  padding: 18px 22px; margin-top: 24px; box-shadow: var(--skygge);
+
+}
+.kal-raekke { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: .7rem; }
+.kal-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--daempet); width: 3rem; }
+.kal-knapper { display: flex; flex-wrap: wrap; gap: .35rem; }
+.kal-knapper button {
+  font: inherit; font-size: .88rem; padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--kant); background: var(--flade); color: var(--tekst);
+}
+.kal-knapper button:hover { border-color: var(--primaer-2); }
+.kal-knapper button[aria-pressed="true"] { background: var(--primaer); border-color: var(--primaer); color: #fff; font-weight: 600; }
+.kal-visning { margin-left: auto; }
+.kal-typer button { font-size: .8rem; }
+.kal-typer button[aria-pressed="true"] { background: var(--f); border-color: var(--k); color: var(--tekst); }
+.kal-typer button[aria-pressed="false"] { opacity: .55; text-decoration: line-through; }
+.kal-bund { justify-content: space-between; margin-bottom: 0; }
+.kal-check { font-size: .9rem; display: flex; gap: .4rem; align-items: center; cursor: pointer; }
+.kal-handlinger .knap { border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: .85rem; padding: .5rem .9rem; }
+.kal-status { margin: .8rem 0 0; padding-top: .7rem; border-top: 1px solid var(--kant); font-size: .92rem; color: var(--daempet); }
+.kal-status strong { color: var(--tekst); }
+@media (max-width: 700px) {
+  .kal-panel { padding: 14px; }
+  .kal-label { width: 100%; }
+  .kal-visning { margin-left: 0; }
+}
+
+.kal-forbi-knap, .kal-maanedbar button {
+  font: inherit; font-size: .9rem; cursor: pointer; border-radius: 999px;
+  border: 1px dashed var(--kant); background: transparent; color: var(--primaer-2); padding: .45rem 1rem; margin-top: 20px;
+}
+.kal-maaned h2 { margin: 2rem 0 .6rem; font-size: 1.35rem; }
+.kal-noter { margin: -.2rem 0 .6rem; color: var(--daempet); font-size: .9rem; font-style: italic; }
+.kal-liste { list-style: none; margin: 0; padding: 0; background: var(--flade); border: 1px solid var(--kant); border-radius: var(--radius); overflow: hidden; box-shadow: var(--skygge); }
+.kal-liste li {
+  display: grid; grid-template-columns: 54px 1fr auto; gap: 1rem; align-items: center;
+  padding: .7rem 1rem .7rem .8rem; border-bottom: 1px solid var(--kant); border-left: 5px solid var(--k);
+}
+.kal-liste li:last-child { border-bottom: 0; }
+.kal-liste li.forbi { opacity: .5; }
+.kal-liste li.nu { background: var(--accent-lys); }
+.kal-dag { text-align: center; line-height: 1.05; }
+.kal-dag strong { display: block; font-size: 1.35rem; color: var(--primaer); }
+.kal-dag small { text-transform: uppercase; font-size: .7rem; letter-spacing: .08em; color: var(--daempet); }
+.kal-tekst strong { display: block; }
+.kal-tekst span { font-size: .88rem; color: var(--daempet); }
+.kal-type { font-size: .72rem; font-weight: 600; padding: .2rem .6rem; border-radius: 999px; background: var(--f); color: var(--tekst); white-space: nowrap; }
+@media (max-width: 600px) { .kal-type { display: none; } .kal-liste li { grid-template-columns: 44px 1fr; } }
+.kal-tom { color: var(--daempet); margin-top: 2rem; }
+
+.kal-maanedbar { display: flex; align-items: center; gap: .6rem; margin: 1.5rem 0 .8rem; }
+.kal-maanedbar h2 { margin: 0; min-width: 11rem; text-align: center; font-size: 1.35rem; }
+.kal-maanedbar button { margin: 0; border-style: solid; padding: .35rem .85rem; }
+.kal-idag-knap { margin-left: auto !important; }
+.kal-gitter { background: var(--flade); border: 1px solid var(--kant); border-radius: var(--radius); overflow: hidden; box-shadow: var(--skygge); }
+.kal-ugedage, .kal-uge { display: grid; grid-template-columns: repeat(5, 1fr) .55fr .55fr; }
+.kal-ugedage div { padding: .5rem; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--daempet); border-bottom: 1px solid var(--kant); }
+.kal-celle { min-height: 110px; padding: .35rem; border-right: 1px solid var(--kant); border-bottom: 1px solid var(--kant); overflow: hidden; }
+.kal-uge:last-child .kal-celle { border-bottom: 0; }
+.kal-celle:nth-child(7) { border-right: 0; }
+.kal-celle.weekend { background: #fafbfa; }
+.kal-celle.anden { background: var(--bg); }
+.kal-celle.anden .kal-nr { opacity: .35; }
+.kal-nr { display: inline-block; font-size: .8rem; font-weight: 700; color: var(--daempet); margin-bottom: .2rem; padding: 0 .3rem; border-radius: 6px; }
+.kal-celle.idag .kal-nr { background: var(--accent); color: #241a00; }
+.kal-chip {
+  font-size: .74rem; line-height: 1.25; padding: .2rem .4rem; margin-bottom: .2rem; border-radius: 6px;
+  background: var(--f); border-left: 3px solid var(--k);
+}
+.kal-chip em { font-style: normal; opacity: .7; font-size: .68rem; }
+@media (max-width: 700px) {
+  .kal-gitter { overflow-x: auto; }
+  .kal-ugedage, .kal-uge { min-width: 640px; }
+}
