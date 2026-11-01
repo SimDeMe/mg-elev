@@ -56,6 +56,8 @@ sider/forloeb.html    Flerfaglige forløb
 sider/arrangementer.html Operation Dagsværk, aktivitetsdag m.m.
 sider/praktisk.html   Praktisk info, eksamen, IT, links
 assets/style.css      Al styling (farver som CSS-variabler i :root)
+assets/fonts/         Montserrat (OFL), lokal kopi – ingen eksterne fonte
+assets/img/           Skolens logo (sort og hvid), fra middelfart-gym.dk
 assets/site.js        Fælles header, navigation, footer, søgning
 assets/config.js      Alle eksterne URL'er
 assets/kalender.js    Kalendervisning + "Kommende" på forsiden (data-kal-*)
@@ -77,6 +79,10 @@ node tools/opdater-kalender.mjs ../smbi/skolekalender/data.js   # fra lokal kopi
 ```
 
 `assets/kalender-data.js` må ikke rettes i hånden. Kalenderen må kun indeholde fælles begivenheder for hold, klasser og personale – aldrig navne på elever eller enkeltpersoner.
+
+### Udseende
+
+Designet følger skolens officielle side middelfart-gym.dk: Montserrat, mørkeblå `#343f56`, orange `#fb9300`, rød knapfarve, creme `#fff8ea`, versal-overskrifter med en orange streg over og skolens logo. Der bruges **ingen fotos** fra skolens side, fordi de viser genkendelige personer.
 
 ### Konventioner
 

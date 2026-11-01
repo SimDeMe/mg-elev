@@ -6,6 +6,8 @@ window.MG_CONFIG = {
     { navn: "Del dobbeltsider", beskrivelse: "Del scannede opslag op i enkeltsider i den rigtige rækkefølge.", url: "https://smbi.dk/pdf-vaerksted/" },
     { navn: "Søgbar tekst (OCR)", beskrivelse: "Gør en scannet PDF søgbar, så teksten kan markeres og kopieres.", url: "https://smbi.dk/pdf-vaerksted/" }
   ],
+  // Skolens officielle funktionskontakt (som på middelfart-gym.dk) – aldrig personlige kontakter.
+  kontakt: { telefon: "64 41 22 72", telefonLink: "tel:+4564412272", mail: "mail@middelfart-gym.dk" },
   links: {
     smbiKalender: "https://smbi.dk/Skolekalender_2026-27.html",
     pdfVaerksted: "https://smbi.dk/pdf-vaerksted/",
