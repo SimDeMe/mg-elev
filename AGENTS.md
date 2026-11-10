@@ -65,7 +65,7 @@ vaerktoejer/          Selvstændige lærerværktøjer, hver i sin mappe med inde
                       (bordgrupper, normer, eksamensbelastning, turnering, rejsekasse, udgangsbillet, er-stig-her)
 ```
 
-`er-stig-her` viser IT-teknikerens fornavn og arbejdstelefon, som de står på IT-Center Fyns opslag på skolen. Det er en bevidst undtagelse fra reglen om navne (Niels, november 2026).
+`er-stig-her` viser IT-teknikerens fornavn og tider, som de står på IT-Center Fyns opslag på skolen (telefonnummeret er bevidst udeladt; siden henviser til hans dør). Det er en bevidst undtagelse fra reglen om navne (Niels, november 2026).
 
 Værktøjerne i `vaerktoejer/` er flyttet fra kemiformler.dk/MG (Niels) og har deres eget udseende uden fælles header. De gemmer kun i brugerens egen browser (localStorage). Rejsekassen og normerne kan lægges på hjemmeskærmen (manifest og service worker i mappen). Kortene står under "Til lærerne" i `sider/vaerktoejer.html`.
 
