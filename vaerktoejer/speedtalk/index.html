@@ -1,0 +1,680 @@
+<!doctype html>
+<!--
+  Speedtalk: læreren skriver fagordene, og de kommer på tavlen ét ad gangen med en klokke imellem.
+  Eleverne sidder to og to. Den ene forklarer fagordet, den anden lytter og hjælper, og de bytter ved hver klokke.
+  Lavet efter Speedtalk på Kemibogens fagordslister (Kemibogen/stil/fagord.html, Niels 15.-20. okt. 2026), men til
+  alle fag: man skriver selv fagordene (Niels 10. nov. 2026). Tavlen, klokken og reglerne er de samme.
+
+  Fagordene adskilles med linjeskift eller semikolon. Står der en tabulator i en linje (kopieret fra et regneark,
+  en tabel i Word eller Quizlet), bruges kun teksten før den, altså første kolonne. Et fagord, der står flere
+  gange, kommer kun med én gang.
+
+  Adressen kan fylde felterne ud, og når felterne ændres, skrives de ind i adressen igen:
+    ord     fagordene, adskilt med linjeskift (%0A) eller semikolon
+    tid     sekunder pr. fagord: 10, 15, 20, 25, 30, 45 eller 60 (forvalgt 15)
+    bland   0 = fagordene kommer i den rækkefølge, de er skrevet (forvalgt 1)
+    klokke  0 = ingen klokke (forvalgt 1)
+  Eksempel: index.html?ord=fotosyntese;celleånding;enzym&tid=20
+  Uden noget i adressen henter siden det, der sidst blev skrevet i samme browser (localStorage "mg-speedtalk").
+
+  På tavlen: mellemrum er pause, pilene og PageUp/PageDown (en fremviser) skifter fagord, og Esc lukker.
+-->
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speedtalk</title>
+<style>
+:root {
+  --bord: #e6ecea;
+  --ark: #ffffff;
+  --blæk: #14201f;
+  --dæmpet: #55635f;
+  --streg: #d3dcd9;
+  --accent: #0f766e;
+  --accent-mørk: #0b5d57;
+  --accent-svag: #e3f1ef;
+  --advarsel: #9a3412;
+  --advarsel-bg: #fbefe6;
+  --skrift: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--bord); }
+body {
+  margin: 0; background: var(--bord); color: var(--blæk);
+  font: 15px/1.5 var(--skrift);
+  padding: 24px 16px 48px;
+}
+.side {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(280px, 440px) minmax(0, 1fr); gap: 32px; align-items: start;
+}
+
+/* Formularen */
+.formular { display: grid; gap: 16px; min-width: 0; }
+.tilbage { font-size: .88rem; color: var(--accent); text-decoration: none; }
+.tilbage:hover { text-decoration: underline; }
+.formular h1 { margin: 4px 0 0; font-size: 1.6rem; line-height: 1.2; }
+.indledning { margin: 6px 0 0; color: var(--dæmpet); }
+.felt { display: grid; gap: 6px; min-width: 0; }
+.felt > label, .felt-hoved > label:first-child, .gruppe-navn { font-weight: 600; font-size: .9rem; }
+.felt-hoved { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+textarea {
+  font: inherit; color: inherit; background: var(--ark);
+  border: 1px solid var(--streg); border-radius: 8px; padding: 8px 10px; width: 100%;
+  resize: vertical; min-height: 12em; line-height: 1.45;
+}
+textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+::placeholder { color: #8a9693; }
+.regel { margin: 0; font-size: .82rem; color: var(--dæmpet); }
+.afkryds { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.skifter {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; justify-self: start;
+  background: var(--ark); border: 1px solid var(--streg); border-radius: 10px;
+}
+.skifter label { position: relative; }
+.skifter input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.skifter span { display: block; min-width: 40px; text-align: center; padding: 6px 10px; border-radius: 7px; cursor: pointer; }
+.skifter input:checked + span { background: var(--accent); color: #fff; }
+.skifter input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.valg { display: grid; gap: 8px; }
+.valg-række { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.knapper { display: grid; gap: 8px; }
+.knaprække { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; }
+button { font: inherit; cursor: pointer; border-radius: 8px; padding: 9px 18px; border: 1px solid var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { cursor: default; opacity: .45; }
+.lav { background: var(--accent); color: #fff; font-weight: 600; }
+.lav:not(:disabled):hover { background: var(--accent-mørk); border-color: var(--accent-mørk); }
+.kopier { background: var(--ark); color: var(--accent); }
+.kopier:not(:disabled):hover { background: var(--accent-svag); }
+.lille-knap { padding: 2px 10px; font-size: .85rem; border-color: var(--streg); background: var(--ark); color: var(--accent); }
+.lille-knap:hover { border-color: var(--accent); }
+.note { margin: 0; font-size: .85rem; color: var(--dæmpet); }
+
+/* Fagordene, som de bliver læst */
+.vis { position: sticky; top: 16px; display: grid; gap: 12px; min-width: 0; }
+.kort {
+  background: var(--ark); border-radius: 12px; padding: 18px 20px 20px;
+  box-shadow: 0 1px 3px rgba(20, 32, 31, .14), 0 8px 24px rgba(20, 32, 31, .10);
+}
+.kort h2 { margin: 0; font-size: 1.05rem; }
+.omfang { margin: 2px 0 0; color: var(--dæmpet); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.besked {
+  margin: 0; font-size: .88rem; padding: 8px 12px; border-radius: 0 6px 6px 0;
+  background: var(--advarsel-bg); color: var(--advarsel); border-left: 3px solid var(--advarsel);
+}
+.besked.mild { background: var(--accent-svag); color: var(--blæk); border-left-color: var(--accent); }
+.ordliste { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ordliste li {
+  background: var(--accent-svag); border: 1px solid #c3dcd8; border-radius: 999px;
+  padding: 3px 12px; overflow-wrap: anywhere;
+}
+.tom { margin: 14px 0 0; color: #8a9693; font-style: italic; }
+@media (max-width: 820px) {
+  .side { grid-template-columns: minmax(0, 1fr); }
+  .vis { position: static; }
+}
+
+/* Tavlen dækker hele skærmen og viser ét fagord ad gangen, så stort som der er plads til. Bjælken forneden
+   viser tiden og bliver gul de sidste 5 sekunder. Knapperne og musen forsvinder, mens fagordene kører. */
+html.tavle-åben { overflow: hidden; }
+.tavle {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; height: 100%; background: #fff; color: var(--blæk);
+}
+.tavle:focus { outline: none; }
+.klar, .scene, .slutbillede { display: none; }
+.tavle[data-tilstand="klar"] .klar,
+.tavle[data-tilstand="slut"] .slutbillede { display: flex; flex-direction: column; align-items: center; padding: 0 1.2rem; }
+.tavle[data-tilstand="koerer"] .scene { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.overskrift { color: var(--accent); font-size: clamp(2.4rem, 8vh, 5rem); font-weight: 800; line-height: 1.1; }
+.regler { max-width: 32em; margin: 1.1em 0 .9em; padding-left: 1.2em; font-size: clamp(1.15rem, 3.6vh, 2.1rem); line-height: 1.45; }
+.regler li + li { margin-top: .25em; }
+.klaromfang { margin: 0 0 1.2em; color: #556766; font-size: clamp(1rem, 2.8vh, 1.6rem); text-align: center; }
+.stor {
+  border: 2px solid var(--accent); border-radius: 999px; background: var(--accent); color: #fff;
+  font-size: clamp(1.2rem, 3.8vh, 2.2rem); font-weight: 700; padding: .3em 1.6em;
+}
+.stor:hover { background: var(--accent-mørk); border-color: var(--accent-mørk); }
+.stor.hvid { background: #fff; color: var(--accent); }
+.stor.hvid:hover { background: var(--accent-svag); }
+.stor:focus-visible, .styring button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.nr, .sek { position: absolute; top: 2.5vh; color: #7b8f8d; font-size: clamp(16px, 3vh, 30px); font-variant-numeric: tabular-nums; }
+.nr { left: 3vw; }
+.sek { right: 3vw; }
+.ord { width: 92vw; color: var(--blæk); font-weight: 750; line-height: 1.12; text-align: center; overflow-wrap: normal; hyphens: manual; }
+.ord.nyt { animation: ind .35s ease-out; }
+@keyframes ind { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+.pausetekst { display: none; position: absolute; top: 12vh; left: 0; right: 0; color: #556766; font-size: clamp(18px, 4vh, 40px); font-weight: 700; text-align: center; }
+.tavle.pauset .pausetekst { display: block; }
+.tavle.pauset .ord { opacity: .55; }
+.ros { color: #1e8e5a; font-size: clamp(2.6rem, 10vh, 6.5rem); font-weight: 800; }
+.slutknapper { display: flex; gap: 1rem; margin-top: 1.2em; }
+.bjælke { display: none; position: absolute; left: 0; right: 0; bottom: 0; height: 1.8vh; min-height: 10px; background: var(--accent-svag); }
+.tavle[data-tilstand="koerer"] .bjælke { display: block; }
+.fyld { width: 100%; height: 100%; background: var(--accent); transform-origin: left center; transition: transform .1s linear, background-color .3s ease; }
+.tavle.sidste .fyld { background: #c98a04; }
+.styring {
+  position: absolute; left: 0; right: 0; bottom: calc(max(1.8vh, 10px) + 14px);
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; padding: 0 1rem;
+  transition: opacity .3s ease;
+}
+.styring button {
+  border: 1px solid #c3d6d4; border-radius: 999px; background: #fff; color: #33504d;
+  padding: .2rem .9rem; font-size: .95rem;
+}
+.styring button:hover { border-color: var(--accent); color: var(--accent); }
+.tavle:not([data-tilstand="koerer"]) .kun-koerer { display: none; }
+.tavle[data-tilstand="slut"] .styring { display: none; }
+.tavle.stille { cursor: none; }
+.tavle.stille .styring { opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .ord.nyt { animation: none; } }
+@media print { .tavle { display: none !important; } }
+</style>
+</head>
+<body>
+<main class="side">
+  <section class="formular" aria-label="Fagord og valg">
+    <div>
+      <a class="tilbage" href="../../sider/vaerktoejer.html#laerere">← Alle værktøjer</a>
+      <h1>Speedtalk</h1>
+      <p class="indledning">Skriv fagordene, og vis dem på tavlen ét ad gangen. Eleverne sidder to og to og forklarer fagordene for hinanden. Når klokken ringer, kommer et nyt fagord, og de bytter.</p>
+    </div>
+
+    <div class="felt">
+      <div class="felt-hoved">
+        <label for="tekst">Fagord</label>
+        <button type="button" class="lille-knap" id="ryd">Ryd feltet</button>
+      </div>
+      <textarea id="tekst" rows="10" spellcheck="false" placeholder="fotosyntese&#10;celleånding; enzym; mitokondrie"></textarea>
+      <p class="regel">Ét fagord pr. linje, eller adskilt med semikolon (;). Kopierer du fra et regneark, en tabel eller Quizlet, bruges kun første kolonne.</p>
+    </div>
+
+    <div class="felt">
+      <span class="gruppe-navn" id="tid-navn">Tid pr. fagord (sekunder)</span>
+      <div class="skifter" role="radiogroup" aria-labelledby="tid-navn">
+        <label><input type="radio" name="tid" value="10"><span>10</span></label>
+        <label><input type="radio" name="tid" value="15" checked><span>15</span></label>
+        <label><input type="radio" name="tid" value="20"><span>20</span></label>
+        <label><input type="radio" name="tid" value="25"><span>25</span></label>
+        <label><input type="radio" name="tid" value="30"><span>30</span></label>
+        <label><input type="radio" name="tid" value="45"><span>45</span></label>
+        <label><input type="radio" name="tid" value="60"><span>60</span></label>
+      </div>
+    </div>
+
+    <div class="valg">
+      <label class="afkryds"><input type="checkbox" id="bland" checked> Bland fagordene</label>
+      <div class="valg-række">
+        <label class="afkryds"><input type="checkbox" id="klokke" checked> Klokke, når fagordet skifter</label>
+        <button type="button" class="lille-knap" id="proev">Prøv klokken</button>
+      </div>
+    </div>
+
+    <div class="knapper">
+      <div class="knaprække">
+        <button type="button" class="lav" id="vis-tavle" disabled>Vis på tavlen</button>
+        <p class="note" id="knap-omfang"></p>
+      </div>
+      <div class="knaprække">
+        <button type="button" class="kopier" id="kopier">Kopiér link</button>
+        <p class="note" id="kopieret" role="status" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="vis" aria-label="Fagordene">
+    <div class="kort">
+      <h2>Fagordene på tavlen</h2>
+      <p class="omfang" id="omfang">Ingen fagord endnu</p>
+      <p class="tom" id="tom">Fagordene kommer til at stå her, efterhånden som du skriver dem.</p>
+      <ul class="ordliste" id="ordliste"></ul>
+    </div>
+    <p class="besked" id="besked" role="status" hidden></p>
+    <p class="besked mild" id="besked-komma" hidden>Et komma bliver stående i fagordet. Skriv semikolon eller linjeskift mellem fagordene.</p>
+    <p class="besked mild" id="besked-dubletter" hidden></p>
+  </section>
+</main>
+
+<div class="tavle" id="tavle" hidden tabindex="-1" role="dialog" aria-modal="true" aria-label="Speedtalk">
+  <div class="klar">
+    <div class="overskrift">Speedtalk</div>
+    <ul class="regler">
+      <li>Find en makker.</li>
+      <li>Den ene taler så hurtigt og så meget som muligt om fagordet.</li>
+      <li>Den anden lytter og hjælper, hvis makkeren går i stå.</li>
+      <li id="regel-skift">Når klokken ringer, stopper I, hvor I er. Der kommer et nyt fagord, og I bytter.</li>
+    </ul>
+    <p class="klaromfang" id="klaromfang"></p>
+    <button type="button" class="stor" id="start">Start</button>
+  </div>
+  <div class="scene">
+    <span class="nr" id="nr"></span>
+    <span class="sek" id="sek"></span>
+    <div class="ord" id="ord"></div>
+    <div class="pausetekst">Pause</div>
+  </div>
+  <div class="slutbillede">
+    <div class="ros">Godt snakket!</div>
+    <div class="slutknapper">
+      <button type="button" class="stor" id="igen">Igen</button>
+      <button type="button" class="stor hvid" id="slut-luk">Luk</button>
+    </div>
+  </div>
+  <div class="styring" id="styring">
+    <button type="button" class="kun-koerer" id="forrige">← Forrige</button>
+    <button type="button" class="kun-koerer" id="pause">Pause</button>
+    <button type="button" class="kun-koerer" id="naeste">Næste →</button>
+    <button type="button" id="fuld">Hele skærmen</button>
+    <button type="button" id="luk">Luk</button>
+  </div>
+  <div class="bjælke"><div class="fyld" id="fyld"></div></div>
+</div>
+
+<script>
+(() => {
+  const TIDER = [10, 15, 20, 25, 30, 45, 60];
+  const FORVALG_TID = 15;
+  const GOD = [10, 20];          // Speedtalk virker bedst med 10 til 20 fagord (Niels 19. okt. 2026)
+  const GEMT = "mg-speedtalk";   // det, der sidst blev skrevet, i brugerens egen browser
+
+  const $ = id => document.getElementById(id);
+  const tekst = $("tekst"), blandFelt = $("bland"), klokkeFelt = $("klokke");
+  const tavle = $("tavle"), ordFelt = $("ord"), fyld = $("fyld");
+
+  // ----- Fagordene -------------------------------------------------------------------------
+  // Linjeskift og semikolon skiller fagordene. Fra en linje med tabulator bruges kun første kolonne, og et
+  // punkttegn forrest ("• ", "- ") fjernes. Tal forrest bliver stående ("1. verdenskrig").
+  function læsFagord() {
+    const set = new Set(), ord = [];
+    let dubletter = 0, komma = false;
+    tekst.value.split(/\r?\n/).forEach(linje => {
+      linje.split("\t")[0].split(";").forEach(del => {
+        const o = del.replace(/^\s*[•·▪◦‣*–—-]\s+/, "").replace(/\s+/g, " ").trim();
+        if (!o) return;
+        const nøgle = o.toLocaleLowerCase("da");
+        if (set.has(nøgle)) { dubletter++; return; }
+        set.add(nøgle);
+        ord.push(o);
+        if (o.includes(",")) komma = true;
+      });
+    });
+    return { ord, dubletter, komma };
+  }
+
+  function værdier() {
+    const r = document.querySelector('input[name="tid"]:checked');
+    return { tid: r ? Number(r.value) : FORVALG_TID, bland: blandFelt.checked, klokke: klokkeFelt.checked };
+  }
+
+  function minutter(n, tid) {
+    const min = Math.max(1, Math.round(n * tid / 60));
+    return "cirka " + min + (min === 1 ? " minut" : " minutter");
+  }
+
+  function opdater() {
+    const { ord, dubletter, komma } = læsFagord(), n = ord.length, v = værdier();
+    const liste = $("ordliste");
+    liste.replaceChildren(...ord.map(o => { const li = document.createElement("li"); li.textContent = o; return li; }));
+    $("tom").hidden = n > 0;
+    $("omfang").textContent = n ? (n === 1 ? "1 fagord" : n + " fagord") + " · " + minutter(n, v.tid) : "Ingen fagord endnu";
+    $("knap-omfang").textContent = n ? v.tid + " sekunder pr. fagord" : "Skriv først fagordene i feltet.";
+    $("vis-tavle").disabled = !n;
+
+    const besked = $("besked");
+    if (!n) {
+      besked.hidden = true;
+    } else if (n < GOD[0] || n > GOD[1]) {
+      besked.textContent = "Du har skrevet " + n + " fagord. Speedtalk virker bedst med " + GOD[0] + " til " + GOD[1] +
+        (n > GOD[1] ? " fagord, så tag gerne nogle af dem ud." : " fagord.");
+      besked.className = "besked";
+      besked.hidden = false;
+    } else {
+      besked.textContent = "Du har skrevet " + n + " fagord, og det passer godt til Speedtalk.";
+      besked.className = "besked mild";
+      besked.hidden = false;
+    }
+    $("besked-komma").hidden = !komma;
+    const dub = $("besked-dubletter");
+    dub.hidden = !dubletter;
+    dub.textContent = dubletter === 1 ? "Et fagord stod der mere end én gang og er kun med én gang."
+      : dubletter + " fagord stod der mere end én gang og er kun med én gang.";
+  }
+
+  // ----- Adressen og browserens hukommelse -------------------------------------------------
+  function forespørgsel() {
+    const v = værdier(), p = new URLSearchParams(), ord = læsFagord().ord;
+    if (ord.length) p.set("ord", ord.join("\n"));
+    if (v.tid !== FORVALG_TID) p.set("tid", v.tid);
+    if (!v.bland) p.set("bland", "0");
+    if (!v.klokke) p.set("klokke", "0");
+    const s = p.toString();
+    return s ? "?" + s : "";
+  }
+  function vælgTid(t) {
+    const r = document.querySelector('input[name="tid"][value="' + t + '"]');
+    if (r) r.checked = true;
+  }
+  function anvend(d) {
+    if (typeof d.tekst === "string") tekst.value = d.tekst;
+    if (TIDER.includes(Number(d.tid))) vælgTid(Number(d.tid));
+    if (typeof d.bland === "boolean") blandFelt.checked = d.bland;
+    if (typeof d.klokke === "boolean") klokkeFelt.checked = d.klokke;
+  }
+  function læsAdresse() {
+    const p = new URLSearchParams(location.search);
+    if (["ord", "tid", "bland", "klokke"].some(k => p.has(k))) {
+      anvend({
+        tekst: (p.get("ord") || "").split(/\r?\n|;/).map(s => s.trim()).filter(Boolean).join("\n"),
+        tid: p.get("tid") || FORVALG_TID,
+        bland: p.get("bland") !== "0",
+        klokke: p.get("klokke") !== "0"
+      });
+      return;
+    }
+    try {
+      const gemt = JSON.parse(localStorage.getItem(GEMT) || "null");
+      if (gemt && typeof gemt === "object") anvend(gemt);
+    } catch (e) { /* intet gemt, eller browseren tillader det ikke */ }
+  }
+  let adresseUr = 0;
+  function gem() {
+    try { localStorage.setItem(GEMT, JSON.stringify(Object.assign({ tekst: tekst.value }, værdier()))); } catch (e) { /* ingen */ }
+    clearTimeout(adresseUr);
+    adresseUr = setTimeout(() => {
+      try { history.replaceState(null, "", location.pathname + forespørgsel() + location.hash); } catch (e) { /* fx file:// */ }
+    }, 400);
+  }
+  function ændret() { opdater(); gem(); }
+
+  // ----- Klokken ---------------------------------------------------------------------------
+  // Klokken laves med Web Audio, så der ikke er nogen lydfil: to slag på en lille klokke med uharmoniske
+  // overtoner, der klinger ud. Lyden skal kunne høres, mens hele klassen snakker. Samme klokke som i Kemibogen.
+  let lydkilde = null;
+  function lyd() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!lydkilde) {
+      try { lydkilde = new AC(); } catch (e) { return null; }
+    }
+    if (lydkilde.state === "suspended") lydkilde.resume();
+    return lydkilde;
+  }
+  function klokke() {
+    const ac = lyd();
+    if (!ac) return;
+    const ud = ac.createGain();
+    ud.gain.value = 0.7;
+    ud.connect(ac.destination);
+    const grund = 988;
+    // [forhold til grundtonen, styrke, sekunder til den er klinget ud]
+    const toner = [[0.5, 0.12, 1.6], [1, 0.55, 2.4], [2.76, 0.24, 1.3], [5.4, 0.12, 0.7], [8.93, 0.05, 0.35]];
+    [[0, 1], [0.2, 0.8]].forEach(slag => {
+      const t = ac.currentTime + 0.02 + slag[0];
+      toner.forEach(d => {
+        const osc = ac.createOscillator(), g = ac.createGain();
+        osc.type = "sine";
+        osc.frequency.value = grund * d[0];
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(d[1] * slag[1], t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + d[2]);
+        osc.connect(g);
+        g.connect(ud);
+        osc.start(t);
+        osc.stop(t + d[2] + 0.05);
+      });
+    });
+  }
+  function ring() { if (klokkeFelt.checked) klokke(); }
+
+  // ----- Tavlen ----------------------------------------------------------------------------
+  // Tre tilstande: klar (reglerne og Start), koerer (et fagord ad gangen med en bjælke for tiden) og slut.
+  let st = null;            // { ord, i, varighed, slut, rest, pause } mens fagordene kører
+  let ur = 0, stilleUr = 0, vågen = null;
+
+  function bland(liste) {
+    const a = liste.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function tilstand(t) {
+    tavle.setAttribute("data-tilstand", t);
+    tavle.classList.remove("stille", "pauset", "sidste");
+    clearTimeout(stilleUr);
+  }
+
+  function fuldskærm() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  function heleSkærmen() {
+    const f = tavle.requestFullscreen || tavle.webkitRequestFullscreen;
+    if (!f || fuldskærm()) return;
+    try {
+      const p = f.call(tavle);
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { /* så bliver tavlen i vinduet */ }
+  }
+  function opdaterFuld() {
+    $("fuld").hidden = !!fuldskærm() || !(tavle.requestFullscreen || tavle.webkitRequestFullscreen);
+    tilpas();
+  }
+  document.addEventListener("fullscreenchange", opdaterFuld);
+  document.addEventListener("webkitfullscreenchange", opdaterFuld);
+  window.addEventListener("resize", () => { if (!tavle.hidden) tilpas(); });
+
+  // Skærmen må ikke gå i dvale midt i en runde.
+  function holdVågen() {
+    try {
+      if (navigator.wakeLock) navigator.wakeLock.request("screen").then(l => { vågen = l; }, () => {});
+    } catch (e) { vågen = null; }
+  }
+  function slipVågen() {
+    if (vågen) { try { vågen.release(); } catch (e) { /* ingen */ } }
+    vågen = null;
+  }
+
+  // Fagordet står så stort, som der er plads til, uden at et ord bliver delt.
+  function tilpas() {
+    if (tavle.getAttribute("data-tilstand") !== "koerer") return;
+    let str = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.28);
+    const højst = window.innerHeight * 0.62;
+    ordFelt.style.fontSize = str + "px";
+    while (str > 20 && (ordFelt.scrollWidth > ordFelt.clientWidth + 1 || ordFelt.scrollHeight > højst)) {
+      str *= 0.92;
+      ordFelt.style.fontSize = str + "px";
+    }
+  }
+
+  function åbnTavle() {
+    const ord = læsFagord().ord, v = værdier();
+    if (!ord.length) return;
+    $("regel-skift").textContent = v.klokke
+      ? "Når klokken ringer, stopper I, hvor I er. Der kommer et nyt fagord, og I bytter."
+      : "Når der kommer et nyt fagord, stopper I, hvor I er, og I bytter.";
+    $("klaromfang").textContent = (ord.length === 1 ? "1 fagord" : ord.length + " fagord") + " · " +
+      v.tid + " sekunder pr. fagord · " + minutter(ord.length, v.tid);
+    tilstand("klar");
+    tavle.hidden = false;
+    document.documentElement.classList.add("tavle-åben");
+    heleSkærmen();
+    opdaterFuld();
+    $("start").focus({ preventScroll: true });
+  }
+
+  function kør() {
+    if (tavle.getAttribute("data-tilstand") === "koerer") return;
+    const ord = læsFagord().ord;
+    if (!ord.length) return;
+    lyd();
+    st = { ord: blandFelt.checked ? bland(ord) : ord.slice(), i: 0, tid: værdier().tid };
+    tilstand("koerer");
+    tavle.focus({ preventScroll: true });
+    holdVågen();
+    visOrd(0);
+    clearInterval(ur);
+    ur = setInterval(tik, 100);
+    vækMedStyring();
+  }
+
+  function visOrd(i) {
+    st.i = i;
+    st.varighed = st.tid * 1000;
+    st.slut = performance.now() + st.varighed;
+    st.pause = false;
+    tavle.classList.remove("pauset", "sidste");
+    $("pause").textContent = "Pause";
+    ordFelt.textContent = st.ord[i];
+    $("nr").textContent = (i + 1) + " / " + st.ord.length;
+    tilpas();
+    ordFelt.classList.remove("nyt");
+    void ordFelt.offsetWidth;
+    ordFelt.classList.add("nyt");
+    // Bjælken springer fuld ud uden at glide.
+    fyld.style.transition = "none";
+    fyld.style.transform = "scaleX(1)";
+    void fyld.offsetWidth;
+    fyld.style.transition = "";
+    $("sek").textContent = st.tid;
+    ring();
+  }
+
+  function tik() {
+    if (!st || st.pause) return;
+    const rest = st.slut - performance.now();
+    if (rest <= 0) {
+      if (st.i + 1 < st.ord.length) visOrd(st.i + 1); else slutRunde();
+      return;
+    }
+    fyld.style.transform = "scaleX(" + (rest / st.varighed).toFixed(4) + ")";
+    $("sek").textContent = Math.ceil(rest / 1000);
+    tavle.classList.toggle("sidste", rest <= 5000);
+  }
+
+  function skift(d) {
+    if (!st) return;
+    const j = Math.max(0, st.i + d);
+    if (j >= st.ord.length) slutRunde(); else visOrd(j);
+  }
+
+  function pauseSkift() {
+    if (!st) return;
+    if (st.pause) {
+      st.slut = performance.now() + st.rest;
+      st.pause = false;
+    } else {
+      st.rest = st.slut - performance.now();
+      st.pause = true;
+    }
+    tavle.classList.toggle("pauset", st.pause);
+    $("pause").textContent = st.pause ? "Fortsæt" : "Pause";
+  }
+
+  function slutRunde() {
+    clearInterval(ur);
+    st = null;
+    tilstand("slut");
+    ring();
+    slipVågen();
+    $("igen").focus({ preventScroll: true });
+  }
+
+  function lukTavle() {
+    clearInterval(ur);
+    st = null;
+    slipVågen();
+    tavle.hidden = true;
+    document.documentElement.classList.remove("tavle-åben");
+    if (fuldskærm() === tavle) {
+      const luk = document.exitFullscreen || document.webkitExitFullscreen;
+      try {
+        const p = luk.call(document);
+        if (p && p.catch) p.catch(() => {});
+      } catch (e) { /* ingen */ }
+    }
+    $("vis-tavle").focus({ preventScroll: true });
+  }
+
+  // Mens fagordene kører, forsvinder knapperne og musen efter et par sekunder, så kun fagordet og bjælken
+  // står på tavlen. De kommer igen, når musen flyttes, eller der trykkes på skærmen.
+  function vækMedStyring() {
+    tavle.classList.remove("stille");
+    clearTimeout(stilleUr);
+    if (tavle.getAttribute("data-tilstand") === "koerer") {
+      stilleUr = setTimeout(() => { tavle.classList.add("stille"); }, 2500);
+    }
+  }
+  tavle.addEventListener("pointermove", vækMedStyring);
+  tavle.addEventListener("pointerdown", vækMedStyring);
+
+  function styreknap(id, handling) {
+    $(id).addEventListener("click", () => {
+      handling();
+      // Fokus tilbage på tavlen, så mellemrum betyder pause og ikke et nyt tryk på knappen.
+      if (!tavle.hidden) tavle.focus({ preventScroll: true });
+    });
+  }
+  styreknap("forrige", () => skift(-1));
+  styreknap("pause", pauseSkift);
+  styreknap("naeste", () => skift(1));
+  styreknap("fuld", heleSkærmen);
+  styreknap("luk", lukTavle);
+
+  document.addEventListener("keydown", e => {
+    if (tavle.hidden) return;
+    const t = tavle.getAttribute("data-tilstand");
+    const påKnap = e.target !== tavle && /^(BUTTON|SELECT|INPUT|A)$/.test(e.target.tagName);
+    const k = e.key;
+    if ((k === " " || k === "Spacebar" || k === "Enter") && påKnap) return;   // knappen klarer det selv
+    let handling = null;
+    if (k === " " || k === "Spacebar") handling = t === "klar" ? kør : t === "koerer" ? pauseSkift : null;
+    else if (k === "ArrowRight" || k === "PageDown") handling = t === "klar" ? kør : t === "koerer" ? () => skift(1) : null;
+    else if (k === "ArrowLeft" || k === "PageUp") handling = t === "koerer" ? () => skift(-1) : null;
+    else if (k === "Escape" || k === "Esc") handling = lukTavle;
+    if (k === " " || k === "Spacebar" || /^(Arrow|Page)/.test(k)) e.preventDefault();
+    if (!handling) return;
+    e.stopPropagation();
+    handling();
+  }, true);
+
+  // ----- I gang ----------------------------------------------------------------------------
+  læsAdresse();
+  document.querySelector(".formular").addEventListener("input", ændret);
+  document.querySelector(".formular").addEventListener("change", ændret);
+  $("ryd").addEventListener("click", () => { tekst.value = ""; ændret(); tekst.focus(); });
+  $("proev").addEventListener("click", klokke);
+  $("vis-tavle").addEventListener("click", åbnTavle);
+  $("start").addEventListener("click", kør);
+  $("igen").addEventListener("click", kør);
+  $("slut-luk").addEventListener("click", lukTavle);
+
+  let kopiUr = 0;
+  $("kopier").addEventListener("click", async () => {
+    gem();
+    const link = location.href.split(/[?#]/)[0] + forespørgsel();
+    let ok = false;
+    try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {
+      const f = document.createElement("textarea");
+      f.value = link; document.body.append(f); f.select();
+      try { ok = document.execCommand("copy"); } catch (e2) { ok = false; }
+      f.remove();
+    }
+    const note = $("kopieret");
+    note.textContent = ok ? "Linket er kopieret. Det åbner siden med de samme fagord og valg."
+      : "Kopiér adressen fra adressefeltet.";
+    note.hidden = false;
+    clearTimeout(kopiUr);
+    kopiUr = setTimeout(() => { note.hidden = true; }, 5000);
+  });
+
+  opdater();
+})();
+</script>
+</body>
+</html>

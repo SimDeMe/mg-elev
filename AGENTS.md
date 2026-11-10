@@ -62,7 +62,7 @@ assets/kalender.js    Kalendervisning + "Kommende" på forsiden (data-kal-*)
 assets/kalender-data.js GENERERET – kalenderens data fra smbi
 tools/opdater-kalender.mjs Henter kalenderdata fra smbi.dk
 vaerktoejer/          Selvstændige lærerværktøjer, hver i sin mappe med index.html
-                      (bordgrupper, normer, eksamensbelastning, turnering, rejsekasse, udgangsbillet, er-stig-her)
+                      (bordgrupper, normer, eksamensbelastning, turnering, rejsekasse, udgangsbillet, speedtalk, er-stig-her)
 ```
 
 `er-stig-her` viser IT-teknikerens fornavn og tider, som de står på IT-Center Fyns opslag på skolen (telefonnummeret er bevidst udeladt; siden henviser til hans dør). Det er en bevidst undtagelse fra reglen om navne (Niels, november 2026).
