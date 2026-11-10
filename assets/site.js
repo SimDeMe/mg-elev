@@ -24,6 +24,7 @@
     { t: "Turnering", h: "vaerktoejer/turnering/index.html", k: "turnering skak schweizer spil runder" },
     { t: "Rejsekasse", h: "vaerktoejer/rejsekasse/index.html", k: "rejsekasse studietur regnskab forskud udlæg kontanter valuta" },
     { t: "Udgangsbilletter", h: "vaerktoejer/udgangsbillet/index.html", k: "udgangsbillet exit ticket spørgsmål print klippe seddel modul lærer" },
+    { t: "Er Stig her i dag??", h: "vaerktoejer/er-stig-her/index.html", k: "stig it it-support tekniker it-center fyn servicedesk hjælp computer skema telefon" },
     { t: "AT – Almen studieforberedelse", h: "sider/forloeb.html#at", k: "at almen studieforberedelse stx synopsis" },
     { t: "SRO / SRP", h: "sider/forloeb.html#srp", k: "sro srp studieretningsopgave studieretningsprojekt opgave vejleder" },
     { t: "DHO / SSO (HF)", h: "sider/forloeb.html#hf", k: "dho sso hf dansk historieopgave større skriftlig opgave" },

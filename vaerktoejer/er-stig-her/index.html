@@ -1,0 +1,277 @@
+<!doctype html>
+<!--
+  Er Stig her i dag??  Viser grønt, når IT-teknikeren er på Middelfart Gymnasium lige nu, og rødt ellers.
+  Skemaet står i SKEMA nedenfor (fra IT-Center Fyns opslag, november 2026).
+    dag    1 = mandag … 5 = fredag
+    uger   'alle' (forvalgt), 'lige' eller 'ulige', hvis en vagt kun gælder hver anden uge
+    sted   'MG' tæller som "her"; andre steder (fx HF&VUC) nævnes kun i teksten
+  Ferier hentes fra skolens kalender (assets/kalender-data.js).
+  Klokken er dansk tid efter computerens ur. Til afprøvning: ?tid=2026-11-13T09:15
+-->
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Er Stig her i dag??</title>
+<meta name="description" content="Er IT-teknikeren Stig på Middelfart Gymnasium i dag? Grønt eller rødt, skemaet og hans telefonnummer.">
+<link rel="icon" id="ikon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2a14 14 0 0 1 0 28z' fill='%23b3261e'/%3E%3Cpath d='M16 30a14 14 0 0 1 0-28z' fill='%2317803f'/%3E%3C/svg%3E">
+<style>
+:root {
+  --groen: #17803f; --groen-mork: #0d5a2a;
+  --roed: #b3261e;  --roed-mork: #7a1914;
+  --farve: #45505c; --mork: #2a323b;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+:root.ja  { --farve: var(--groen); --mork: var(--groen-mork); }
+:root.nej { --farve: var(--roed);  --mork: var(--roed-mork); }
+html { background: var(--farve); }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--farve); color: #fff; font-family: var(--font);
+}
+main { width: min(100% - 32px, 640px); margin: auto; padding: 28px 0 20px; text-align: center; }
+h1 { font-size: clamp(1.5rem, 6vw, 2.4rem); font-weight: 700; margin: 0; }
+.svar { font-size: clamp(5rem, 27vw, 12rem); font-weight: 800; line-height: 1; margin: .12em 0 .12em; letter-spacing: -.02em; }
+.svar.lang { font-size: clamp(3.2rem, 15vw, 7.5rem); margin: .3em 0 .25em; }
+.linje { font-size: clamp(1.15rem, 4.4vw, 1.55rem); margin: 0 0 .25em; line-height: 1.35; }
+.naeste { font-size: clamp(1.02rem, 3.6vw, 1.2rem); margin: 0; opacity: .92; }
+.ring {
+  display: inline-flex; align-items: center; gap: .5em;
+  margin: 1.2em 0 .5em; padding: .65em 1.3em;
+  background: #fff; color: var(--mork); border-radius: 999px;
+  font-size: 1.25rem; font-weight: 700; text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .2);
+}
+.ring:hover { transform: translateY(-1px); }
+.ring:focus-visible, footer a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.ring svg { width: 1.05em; height: 1.05em; flex: none; }
+.tid { font-size: 1rem; opacity: .9; margin: .4em 0 1.3em; }
+.test { display: inline-block; margin-left: .4em; padding: 0 .45em; border-radius: 6px; background: rgba(0, 0, 0, .25); font-size: .85rem; }
+.skema {
+  max-width: 420px; margin: 0 auto; padding: 10px 16px 12px; text-align: left;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .28); border-radius: 14px;
+}
+.skema h2 { margin: 0 0 4px; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; opacity: .88; }
+table { width: 100%; border-collapse: collapse; font-size: 1.02rem; }
+td { padding: 6px 2px; border-top: 1px solid rgba(255, 255, 255, .2); vertical-align: top; }
+tr:first-child td { border-top: 0; }
+td:last-child { text-align: right; }
+tr.idag td { font-weight: 700; }
+.idag-maerke { display: inline-block; margin-left: .4em; padding: 0 .45em; border-radius: 6px; background: #fff; color: var(--mork); font-size: .8rem; font-weight: 700; vertical-align: 1px; }
+.lille { display: block; font-size: .88rem; font-weight: 400; opacity: .88; }
+.fod-skema { margin: 6px 0 0; font-size: .88rem; opacity: .88; }
+footer { width: min(100% - 32px, 640px); margin: 0 auto; padding: 0 0 20px; text-align: center; font-size: .9rem; line-height: 1.55; opacity: .92; }
+footer a { color: #fff; }
+footer p { margin: .3em 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Er Stig her i dag??</h1>
+  <div aria-live="polite">
+    <p class="svar" id="svar">…</p>
+    <p class="linje" id="linje"></p>
+    <p class="naeste" id="naeste"></p>
+  </div>
+  <a class="ring" id="ring" href="tel:+4529202286">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>
+    <span>Ring til Stig: 29 20 22 86</span>
+  </a>
+  <p class="tid" id="tid"></p>
+  <section class="skema" aria-labelledby="skema-h">
+    <h2 id="skema-h">Stigs tider på MG</h2>
+    <table><tbody id="skema"></tbody></table>
+    <p class="fod-skema" id="fod-skema"></p>
+  </section>
+</main>
+<footer>
+  <p>Er han ikke her, så ring eller skriv til IT-Center Fyns Servicedesk: <a href="tel:+4565652000">65 65 20 00</a> · <a href="mailto:Servicedesk@itcfyn.dk">Servicedesk@itcfyn.dk</a></p>
+  <p><a href="../../sider/vaerktoejer.html#laerere">← Alle værktøjer</a></p>
+</footer>
+
+<script src="../../assets/kalender-data.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var SKEMA = [
+    { dag: 2, fra: '7.30',  til: '15.00', sted: 'MG' },
+    { dag: 4, fra: '7.30',  til: '15.00', sted: 'MG' },
+    { dag: 5, fra: '8.30',  til: '11.30', sted: 'HF&VUC' },
+    { dag: 5, fra: '11.30', til: '14.00', sted: 'MG' }
+  ];
+
+  var DAGE = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
+  var MDR = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august',
+             'september', 'oktober', 'november', 'december'];
+  var IKON = {
+    ja:  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2317803f'/%3E%3C/svg%3E",
+    nej: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23b3261e'/%3E%3C/svg%3E"
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function minutter(kl) { var p = kl.split('.'); return +p[0] * 60 + +p[1]; }
+  function stort(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function to(n) { return (n < 10 ? '0' : '') + n; }
+
+  // Testtid fra adressen: ?tid=2026-11-13T09:15
+  var testTid = (function () {
+    var m = /[?&]tid=(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(location.search);
+    return m ? { y: +m[1], m: +m[2], d: +m[3], min: +m[4] * 60 + +m[5] } : null;
+  })();
+
+  // Dansk dato og klokkeslæt, uanset computerens tidszone.
+  function nu() {
+    if (testTid) return testTid;
+    var dele = {};
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Copenhagen', year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', hourCycle: 'h23'
+    }).formatToParts(new Date()).forEach(function (p) { dele[p.type] = p.value; });
+    return { y: +dele.year, m: +dele.month, d: +dele.day, min: (+dele.hour % 24) * 60 + +dele.minute };
+  }
+
+  // Dagen 'frem' dage efter t, med ugedag (1 = mandag), ISO-dato og ugenummer.
+  function dag(t, frem) {
+    var dt = new Date(Date.UTC(t.y, t.m - 1, t.d + frem));
+    var ugedag = dt.getUTCDay() || 7;
+    var tor = new Date(dt.getTime() + (4 - ugedag) * 86400000);
+    var uge = Math.ceil(((tor - Date.UTC(tor.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
+    return {
+      y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate(), ugedag: ugedag, uge: uge,
+      iso: dt.getUTCFullYear() + '-' + to(dt.getUTCMonth() + 1) + '-' + to(dt.getUTCDate())
+    };
+  }
+
+  var FERIER = (function () {
+    try {
+      return window.MG_KALENDER.BEGIVENHEDER.filter(function (b) { return b.t === 'ferie' && b.h === 'alle'; });
+    } catch (e) { return []; }
+  })();
+  function ferie(iso) {
+    for (var i = 0; i < FERIER.length; i++) {
+      var f = FERIER[i];
+      if (f.d <= iso && iso <= (f.til || f.d)) return f.x;
+    }
+    return null;
+  }
+
+  function vagter(dg) {
+    return SKEMA.filter(function (s) {
+      var uger = s.uger || 'alle';
+      return s.dag === dg.ugedag && (uger === 'alle' || (uger === 'lige') === (dg.uge % 2 === 0));
+    });
+  }
+  function herVagter(dg) {
+    if (ferie(dg.iso)) return [];
+    return vagter(dg).filter(function (s) { return s.sted === 'MG'; });
+  }
+
+  function naesteGang(t) {
+    for (var frem = 1; frem <= 60; frem++) {
+      var dg = dag(t, frem), v = herVagter(dg);
+      if (!v.length) continue;
+      var hvornaar = frem === 1 ? 'i morgen'
+        : frem < 7 ? DAGE[dg.ugedag - 1]
+        : DAGE[dg.ugedag - 1] + ' ' + dg.d + '. ' + MDR[dg.m - 1];
+      return 'Næste gang: ' + hvornaar + ' kl. ' + v[0].fra + '.';
+    }
+    return '';
+  }
+
+  function vis(tilstand, svar, linje, naeste) {
+    document.documentElement.className = tilstand;
+    $('svar').textContent = svar;
+    $('svar').className = 'svar' + (svar.length > 4 ? ' lang' : '');
+    $('linje').textContent = linje;
+    $('naeste').textContent = naeste;
+    $('ikon').href = IKON[tilstand];
+  }
+
+  function opdater() {
+    var t = nu(), idag = dag(t, 0), fer = ferie(idag.iso);
+    var her = herVagter(idag);
+    var andre = fer ? [] : vagter(idag).filter(function (s) { return s.sted !== 'MG'; });
+    function igang(s) { return minutter(s.fra) <= t.min && t.min < minutter(s.til); }
+
+    var nuHer = her.filter(igang)[0];
+    var senere = her.filter(function (s) { return minutter(s.fra) > t.min; })[0];
+
+    if (nuHer) {
+      vis('ja', 'JA', 'Han er her til kl. ' + nuHer.til + '.', '');
+    } else if (senere) {
+      var andetNu = andre.filter(igang)[0];
+      var andetFoer = andre.filter(function (s) { return minutter(s.fra) > t.min && minutter(s.fra) < minutter(senere.fra); })[0];
+      vis('nej', 'IKKE ENDNU', 'Han kommer kl. ' + senere.fra + '.',
+        andetNu ? 'Lige nu er han på ' + andetNu.sted + '.'
+        : andetFoer ? 'Fra kl. ' + andetFoer.fra + ' er han først på ' + andetFoer.sted + '.' : '');
+    } else if (her.length) {
+      vis('nej', 'NEJ', 'Han gik kl. ' + her[her.length - 1].til + '.', naesteGang(t));
+    } else {
+      var hvorfor = fer ? 'Det er ' + fer.toLowerCase() + '.'
+        : idag.ugedag >= 6 ? 'Det er weekend.'
+        : 'Han er her ikke om ' + DAGE[idag.ugedag - 1] + 'en.';
+      vis('nej', 'NEJ', hvorfor, naesteGang(t));
+    }
+
+    $('tid').innerHTML = '';
+    $('tid').appendChild(document.createTextNode(
+      stort(DAGE[idag.ugedag - 1]) + ' ' + idag.d + '. ' + MDR[idag.m - 1] +
+      ' · kl. ' + Math.floor(t.min / 60) + '.' + to(t.min % 60) +
+      ' · uge ' + idag.uge + ', ' + (idag.uge % 2 === 0 ? 'lige' : 'ulige') + ' uge'));
+    if (testTid) {
+      var b = document.createElement('span');
+      b.className = 'test'; b.textContent = 'testtid';
+      $('tid').appendChild(b);
+    }
+
+    tegnSkema(idag, fer);
+  }
+
+  function tegnSkema(idag, fer) {
+    var tb = $('skema');
+    tb.innerHTML = '';
+    for (var d = 1; d <= 5; d++) {
+      var paaDagen = SKEMA.filter(function (s) { return s.dag === d; });
+      if (!paaDagen.length) continue;
+      var tr = document.createElement('tr');
+      var tdDag = document.createElement('td');
+      var tdTid = document.createElement('td');
+      tdDag.textContent = stort(DAGE[d - 1]);
+      if (d === idag.ugedag && !fer) {
+        tr.className = 'idag';
+        var m = document.createElement('span');
+        m.className = 'idag-maerke'; m.textContent = 'i dag';
+        tdDag.appendChild(m);
+      }
+      paaDagen.forEach(function (s) {
+        var uger = s.uger && s.uger !== 'alle' ? ' (' + s.uger + ' uger)' : '';
+        if (s.sted === 'MG') {
+          tdTid.appendChild(document.createTextNode(s.fra + '–' + s.til + uger));
+        } else {
+          var l = document.createElement('span');
+          l.className = 'lille';
+          l.textContent = 'Før det: ' + s.sted + ' ' + s.fra + '–' + s.til + uger;
+          tdTid.appendChild(l);
+        }
+      });
+      // Vagter andre steder står under tiden på MG.
+      var lille = tdTid.querySelector('.lille');
+      if (lille) tdTid.appendChild(lille);
+      tr.appendChild(tdDag); tr.appendChild(tdTid);
+      tb.appendChild(tr);
+    }
+    var skifter = SKEMA.some(function (s) { return s.uger && s.uger !== 'alle'; });
+    $('fod-skema').textContent = skifter ? '' : 'Det samme i lige og ulige uger.';
+  }
+
+  opdater();
+  if (!testTid) {
+    setInterval(opdater, 20000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) opdater(); });
+  }
+})();
+</script>
+</body>
+</html>
