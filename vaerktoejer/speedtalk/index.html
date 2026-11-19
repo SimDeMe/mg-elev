@@ -18,6 +18,15 @@
   Uden noget i adressen henter siden det, der sidst blev skrevet i samme browser (localStorage "mg-speedtalk").
 
   På tavlen: mellemrum er pause, pilene og PageUp/PageDown (en fremviser) skifter fagord, og Esc lukker.
+
+  Billeder (Niels 19. nov. 2026): Med "Billeder til fagordene" slået til bliver listen til højre en række rammer,
+  ét pr. fagord. Man trækker et billede hen på et fagord (en fil fra computeren eller et billede fra en anden
+  hjemmeside), klikker på rammen og vælger en fil, eller klikker på fagordet og sætter et kopieret billede ind med
+  Ctrl+V (så går markeringen videre til næste fagord). Trækkes flere filer ind på én gang, får et fagord den fil,
+  der hedder det samme, og resten fylder de tomme rammer. På tavlen står billedet stort med fagordet under.
+  Billederne gemmes i browserens database (IndexedDB "mg-speedtalk") under fagordet med små bogstaver, så de
+  følger fagordet, også når rækkefølgen ændres. Store billeder gøres mindre (højst 1600 px). De kommer ikke med i
+  linket. Kontakten selv huskes i "mg-speedtalk" i localStorage, også når adressen har fagordene.
 -->
 <html lang="da">
 <head>
@@ -114,6 +123,30 @@ button:disabled { cursor: default; opacity: .45; }
   padding: 3px 12px; overflow-wrap: anywhere;
 }
 .tom { margin: 14px 0 0; color: #8a9693; font-style: italic; }
+
+/* Billeder til fagordene: én række pr. fagord med en ramme, man kan trække et billede hen på. Den valgte række
+   (markeret med en grøn kant) får et billede, der sættes ind med Ctrl+V. */
+.side.med-billeder .vis { position: static; }
+.billedliste { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.billedrække {
+  display: grid; grid-template-columns: 1.4em 72px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 5px 6px; border: 1px solid var(--streg); border-radius: 10px; background: var(--ark); cursor: pointer;
+}
+.billedrække.valgt { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.billedrække.over { background: var(--accent-svag); border-color: var(--accent); border-style: dashed; }
+.rækkenr { color: var(--dæmpet); font-size: .85rem; text-align: right; font-variant-numeric: tabular-nums; }
+.billedplads {
+  width: 72px; height: 52px; padding: 0; border: 1.5px dashed #a9bbb7; border-radius: 7px; background: #f6f9f8;
+  color: #7b8f8d; font-size: 1.4rem; line-height: 1; display: grid; place-items: center; overflow: hidden;
+}
+.billedplads:hover { border-color: var(--accent); color: var(--accent); }
+.billedplads.har { border: 1px solid var(--streg); background: #fff; }
+.billedplads img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rækkeord { overflow-wrap: anywhere; font-weight: 600; }
+.fjern { padding: 0 9px; border: 1px solid transparent; background: none; color: var(--dæmpet); font-size: 1.2rem; line-height: 1.5; }
+.fjern:hover { color: var(--advarsel); border-color: var(--streg); }
+.billednote { margin: 10px 0 0; font-size: .85rem; color: var(--dæmpet); }
+.billednote button { margin-top: 6px; }
 @media (max-width: 820px) {
   .side { grid-template-columns: minmax(0, 1fr); }
   .vis { position: static; }
@@ -148,7 +181,12 @@ html.tavle-åben { overflow: hidden; }
 .nr { left: 3vw; }
 .sek { right: 3vw; }
 .ord { width: 92vw; color: var(--blæk); font-weight: 750; line-height: 1.12; text-align: center; overflow-wrap: normal; hyphens: manual; }
-.ord.nyt { animation: ind .35s ease-out; }
+.ord.nyt, .billede.nyt { animation: ind .35s ease-out; }
+/* Med et billede står billedet stort i midten og fagordet under det. */
+.billede { display: none; }
+.tavle.med-billede .billede { display: block; height: 56vh; max-width: 90vw; object-fit: contain; margin: 0 0 3vh; }
+.tavle.pauset .billede { opacity: .55; }
+.tavle.med-billede .pausetekst { top: 2.2vh; }
 @keyframes ind { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
 .pausetekst { display: none; position: absolute; top: 12vh; left: 0; right: 0; color: #556766; font-size: clamp(18px, 4vh, 40px); font-weight: 700; text-align: center; }
 .tavle.pauset .pausetekst { display: block; }
@@ -173,7 +211,7 @@ html.tavle-åben { overflow: hidden; }
 .tavle[data-tilstand="slut"] .styring { display: none; }
 .tavle.stille { cursor: none; }
 .tavle.stille .styring { opacity: 0; pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .ord.nyt { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ord.nyt, .billede.nyt { animation: none; } }
 @media print { .tavle { display: none !important; } }
 </style>
 </head>
@@ -214,6 +252,7 @@ html.tavle-åben { overflow: hidden; }
         <label class="afkryds"><input type="checkbox" id="klokke" checked> Klokke, når fagordet skifter</label>
         <button type="button" class="lille-knap" id="proev">Prøv klokken</button>
       </div>
+      <label class="afkryds"><input type="checkbox" id="billeder"> Billeder til fagordene</label>
     </div>
 
     <div class="knapper">
@@ -234,7 +273,14 @@ html.tavle-åben { overflow: hidden; }
       <p class="omfang" id="omfang">Ingen fagord endnu</p>
       <p class="tom" id="tom">Fagordene kommer til at stå her, efterhånden som du skriver dem.</p>
       <ul class="ordliste" id="ordliste"></ul>
+      <ol class="billedliste" id="billedliste" hidden></ol>
+      <div class="billednote" id="billednote" hidden>
+        Træk et billede hen på et fagord, eller klik på rammen og vælg en fil. Du kan også klikke på fagordet og sætte et kopieret billede ind med Ctrl+V. Billederne gemmes kun i denne browser og kommer ikke med i linket.
+        <div><button type="button" class="lille-knap" id="fjern-alle" hidden>Fjern alle billeder</button></div>
+      </div>
+      <input type="file" id="filvalg" accept="image/*" multiple hidden>
     </div>
+    <p class="besked" id="besked-billeder" role="status" hidden></p>
     <p class="besked" id="besked" role="status" hidden></p>
     <p class="besked mild" id="besked-komma" hidden>Et komma bliver stående i fagordet. Skriv semikolon eller linjeskift mellem fagordene.</p>
     <p class="besked mild" id="besked-dubletter" hidden></p>
@@ -256,6 +302,7 @@ html.tavle-åben { overflow: hidden; }
   <div class="scene">
     <span class="nr" id="nr"></span>
     <span class="sek" id="sek"></span>
+    <img class="billede" id="billede" alt="">
     <div class="ord" id="ord"></div>
     <div class="pausetekst">Pause</div>
   </div>
@@ -284,8 +331,9 @@ html.tavle-åben { overflow: hidden; }
   const GEMT = "mg-speedtalk";   // det, der sidst blev skrevet, i brugerens egen browser
 
   const $ = id => document.getElementById(id);
-  const tekst = $("tekst"), blandFelt = $("bland"), klokkeFelt = $("klokke");
-  const tavle = $("tavle"), ordFelt = $("ord"), fyld = $("fyld");
+  const tekst = $("tekst"), blandFelt = $("bland"), klokkeFelt = $("klokke"), billedFelt = $("billeder");
+  const tavle = $("tavle"), ordFelt = $("ord"), billedEl = $("billede"), fyld = $("fyld");
+  const nøgle = o => o.toLocaleLowerCase("da");   // et fagord med små bogstaver: til dubletter og billeder
 
   // ----- Fagordene -------------------------------------------------------------------------
   // Linjeskift og semikolon skiller fagordene. Fra en linje med tabulator bruges kun første kolonne, og et
@@ -297,9 +345,9 @@ html.tavle-åben { overflow: hidden; }
       linje.split("\t")[0].split(";").forEach(del => {
         const o = del.replace(/^\s*[•·▪◦‣*–—-]\s+/, "").replace(/\s+/g, " ").trim();
         if (!o) return;
-        const nøgle = o.toLocaleLowerCase("da");
-        if (set.has(nøgle)) { dubletter++; return; }
-        set.add(nøgle);
+        const k = nøgle(o);
+        if (set.has(k)) { dubletter++; return; }
+        set.add(k);
         ord.push(o);
         if (o.includes(",")) komma = true;
       });
@@ -309,7 +357,7 @@ html.tavle-åben { overflow: hidden; }
 
   function værdier() {
     const r = document.querySelector('input[name="tid"]:checked');
-    return { tid: r ? Number(r.value) : FORVALG_TID, bland: blandFelt.checked, klokke: klokkeFelt.checked };
+    return { tid: r ? Number(r.value) : FORVALG_TID, bland: blandFelt.checked, klokke: klokkeFelt.checked, billeder: billedFelt.checked };
   }
 
   function minutter(n, tid) {
@@ -322,7 +370,10 @@ html.tavle-åben { overflow: hidden; }
     const liste = $("ordliste");
     liste.replaceChildren(...ord.map(o => { const li = document.createElement("li"); li.textContent = o; return li; }));
     $("tom").hidden = n > 0;
-    $("omfang").textContent = n ? (n === 1 ? "1 fagord" : n + " fagord") + " · " + minutter(n, v.tid) : "Ingen fagord endnu";
+    const medBilleder = ord.filter(o => billeder.has(nøgle(o))).length;
+    $("omfang").textContent = n ? (n === 1 ? "1 fagord" : n + " fagord") + " · " + minutter(n, v.tid) +
+      (v.billeder && medBilleder ? " · " + medBilleder + " med billede" : "") : "Ingen fagord endnu";
+    visBilledliste(ord, v.billeder);
     $("knap-omfang").textContent = n ? v.tid + " sekunder pr. fagord" : "Skriv først fagordene i feltet.";
     $("vis-tavle").disabled = !n;
 
@@ -365,9 +416,15 @@ html.tavle-åben { overflow: hidden; }
     if (TIDER.includes(Number(d.tid))) vælgTid(Number(d.tid));
     if (typeof d.bland === "boolean") blandFelt.checked = d.bland;
     if (typeof d.klokke === "boolean") klokkeFelt.checked = d.klokke;
+    if (typeof d.billeder === "boolean") billedFelt.checked = d.billeder;
   }
   function læsAdresse() {
     const p = new URLSearchParams(location.search);
+    // Billederne findes kun i denne browser, så kontakten til dem huskes her, også når adressen har fagordene.
+    try {
+      const gemt = JSON.parse(localStorage.getItem(GEMT) || "null");
+      if (gemt && typeof gemt.billeder === "boolean") billedFelt.checked = gemt.billeder;
+    } catch (e) { /* intet gemt */ }
     if (["ord", "tid", "bland", "klokke"].some(k => p.has(k))) {
       anvend({
         tekst: (p.get("ord") || "").split(/\r?\n|;/).map(s => s.trim()).filter(Boolean).join("\n"),
@@ -391,6 +448,286 @@ html.tavle-åben { overflow: hidden; }
     }, 400);
   }
   function ændret() { opdater(); gem(); }
+
+  // ----- Billeder til fagordene ------------------------------------------------------------
+  // Billederne ligger i browserens database under fagordet med små bogstaver. Kan databasen ikke bruges (fx i et
+  // privat vindue), virker billederne stadig, indtil siden lukkes.
+  const KANT = 1600, LILLE = 400 * 1024;
+  const billeder = new Map();            // fagord med små bogstaver → billedet (data-URL eller adresse)
+  let db = null, dbFejl = false, valgt = null, filmål = null, billedTegnet = "", billedVersion = 0;
+
+  function åbnDB() {
+    return new Promise((ok, nej) => {
+      const r = indexedDB.open("mg-speedtalk", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("billeder");
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => nej(r.error);
+      r.onblocked = () => nej(new Error("blokeret"));
+    });
+  }
+  function dbKald(tilstand, fn) {
+    return new Promise((ok, nej) => {
+      if (!db) { nej(new Error("ingen database")); return; }
+      const t = db.transaction("billeder", tilstand), r = fn(t.objectStore("billeder"));
+      t.oncomplete = () => ok(r.result);
+      t.onerror = t.onabort = () => nej(t.error);
+    });
+  }
+  async function hentBilleder() {
+    try {
+      db = await åbnDB();
+      const nøgler = await dbKald("readonly", s => s.getAllKeys());
+      const data = await dbKald("readonly", s => s.getAll());
+      nøgler.forEach((k, i) => billeder.set(k, data[i]));
+      billedVersion++;
+    } catch (e) { db = null; dbFejl = true; }
+    opdater();
+  }
+  function gemBillede(k, data) {
+    billeder.set(k, data);
+    billedVersion++;
+    dbKald("readwrite", s => s.put(data, k)).catch(() => { dbFejl = true; opdater(); });
+  }
+  function fjernBillede(k) {
+    billeder.delete(k);
+    billedVersion++;
+    dbKald("readwrite", s => s.delete(k)).catch(() => {});
+  }
+
+  // En fil bliver til en data-URL. Store billeder tegnes mindre (højst 1600 px på den lange led) og gemmes som
+  // JPEG på hvid baggrund, ligesom tavlen. Små billeder, GIF og SVG gemmes, som de er.
+  function somDataURL(blob) {
+    return new Promise((ok, nej) => {
+      const l = new FileReader();
+      l.onload = () => ok(l.result);
+      l.onerror = () => nej(l.error);
+      l.readAsDataURL(blob);
+    });
+  }
+  function indlæs(src) {
+    return new Promise((ok, nej) => { const b = new Image(); b.onload = () => ok(b); b.onerror = nej; b.src = src; });
+  }
+  async function fraFil(blob) {
+    const data = await somDataURL(blob);
+    if (blob.size <= LILLE || /svg|gif/.test(blob.type)) return data;
+    try {
+      const b = await indlæs(data);
+      const f = Math.min(1, KANT / Math.max(b.naturalWidth, b.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(b.naturalWidth * f));
+      c.height = Math.max(1, Math.round(b.naturalHeight * f));
+      const g = c.getContext("2d");
+      g.fillStyle = "#fff";
+      g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(b, 0, 0, c.width, c.height);
+      const mindre = c.toDataURL("image/jpeg", 0.86);
+      return mindre.length < data.length ? mindre : data;
+    } catch (e) { return data; }
+  }
+  // Et billede fra en anden hjemmeside kommer som en adresse. Tillader siden det, hentes selve billedet; ellers
+  // gemmes adressen, og så skal der være net, når det vises.
+  async function tilBillede(kilde) {
+    if (typeof kilde !== "string") return fraFil(kilde);
+    if (/^data:/i.test(kilde)) return kilde;
+    try {
+      const svar = await fetch(kilde, { mode: "cors" });
+      const blob = await svar.blob();
+      if (svar.ok && /^image\//.test(blob.type)) return fraFil(blob);
+    } catch (e) { /* adressen gemmes i stedet */ }
+    return kilde;
+  }
+
+  // Det, der trækkes ind eller sættes ind: billedfiler, eller adressen på et billede fra en anden hjemmeside.
+  function kilderFra(dt) {
+    const filer = [...(dt.files || [])].filter(f => /^image\//.test(f.type));
+    if (filer.length) return filer;
+    const fraPunkter = [...(dt.items || [])].filter(it => it.kind === "file" && /^image\//.test(it.type)).map(it => it.getAsFile()).filter(Boolean);
+    if (fraPunkter.length) return fraPunkter;
+    let src = "";
+    const html = dt.getData("text/html");
+    if (html) {
+      const img = new DOMParser().parseFromString(html, "text/html").querySelector("img[src]");
+      if (img) src = img.getAttribute("src");
+    }
+    if (!src) {
+      const u = (dt.getData("text/uri-list") || "").split(/\r?\n/).find(l => l && l[0] !== "#") || "";
+      if (/^data:image\//i.test(u) || /\.(jpe?g|png|gif|webp|avif|svg|bmp)([?#]|$)/i.test(u)) src = u;
+    }
+    return /^(https?:|data:image\/)/i.test(src) ? [src] : [];
+  }
+
+  // Billederne fordeles: et fagord får den fil, der hedder det samme (kun når der kommer flere på én gang). Resten
+  // går først til fagordet, de blev trukket hen på (eller det valgte), og derefter til de tomme rammer under det.
+  // Svarer med det sidste fagord, der fik et billede.
+  function filnavn(kilde) {
+    return typeof kilde === "string" || !kilde.name ? "" : nøgle(kilde.name.replace(/\.[^.]+$/, "").replace(/_+/g, " ").replace(/\s+/g, " ").trim());
+  }
+  async function placer(kilder, mål) {
+    const ord = læsFagord().ord.map(nøgle);
+    if (!kilder.length || !ord.length) return null;
+    if (!ord.includes(mål)) mål = null;
+    const par = new Map(), rest = [];
+    kilder.forEach(f => {
+      const n = kilder.length > 1 ? filnavn(f) : "";
+      if (n && ord.includes(n) && !par.has(n)) par.set(n, f); else rest.push(f);
+    });
+    const pladser = [];
+    if (mål && !par.has(mål)) pladser.push(mål);
+    const fra = Math.max(0, ord.indexOf(mål));
+    ord.slice(fra).concat(ord.slice(0, fra)).forEach(k => {
+      if (k !== mål && !par.has(k) && !billeder.has(k)) pladser.push(k);
+    });
+    rest.forEach((f, i) => { if (i < pladser.length) par.set(pladser[i], f); });
+    const tilovers = Math.max(0, rest.length - pladser.length);
+    let sidste = null;
+    for (const [k, f] of par) {
+      try {
+        gemBillede(k, await tilBillede(f));
+        sidste = k;
+      } catch (e) { /* filen kunne ikke læses */ }
+      opdater();
+    }
+    billedbesked(tilovers ? "Alle fagord har allerede et billede. Vil du skifte et, så træk det nye billede hen på fagordet." : "");
+    return sidste;
+  }
+
+  let beskedUr = 0;
+  function billedbesked(t) {
+    const b = $("besked-billeder");
+    if (!t && dbFejl) t = "Billederne kan ikke gemmes i denne browser, så de forsvinder, når siden lukkes.";
+    b.textContent = t;
+    b.hidden = !t;
+    clearTimeout(beskedUr);
+    if (t && !dbFejl) beskedUr = setTimeout(() => { b.hidden = true; }, 8000);
+  }
+
+  // Listen til højre tegnes kun igen, når fagordene eller billederne har ændret sig.
+  function visBilledliste(ord, med) {
+    const n = ord.length;
+    $("ordliste").hidden = med;
+    $("billedliste").hidden = !med || !n;
+    $("billednote").hidden = !med || !n;
+    $("fjern-alle").hidden = !billeder.size;
+    document.querySelector(".side").classList.toggle("med-billeder", med);
+    if (!med) { billedTegnet = ""; return; }
+    if (valgt && !ord.some(o => nøgle(o) === valgt)) valgt = null;
+    const tegn = ord.join("\n") + "|" + billedVersion;
+    if (tegn !== billedTegnet) {
+      billedTegnet = tegn;
+      tegnBilledliste(ord);
+    }
+    document.querySelectorAll(".billedrække").forEach(r => r.classList.toggle("valgt", r.dataset.k === valgt));
+  }
+  function tegnBilledliste(ord) {
+    $("billedliste").replaceChildren(...ord.map((o, i) => {
+      const k = nøgle(o), src = billeder.get(k);
+      const li = document.createElement("li");
+      li.className = "billedrække";
+      li.dataset.k = k;
+      const nr = document.createElement("span");
+      nr.className = "rækkenr";
+      nr.textContent = i + 1;
+      const plads = document.createElement("button");
+      plads.type = "button";
+      plads.className = "billedplads" + (src ? " har" : "");
+      plads.setAttribute("aria-label", (src ? "Skift billedet til " : "Vælg et billede til ") + o);
+      if (src) {
+        const img = document.createElement("img");
+        img.alt = "";
+        img.src = src;
+        plads.append(img);
+      } else plads.textContent = "+";
+      const tekstEl = document.createElement("span");
+      tekstEl.className = "rækkeord";
+      tekstEl.textContent = o;
+      li.append(nr, plads, tekstEl);
+      if (src) {
+        const fjern = document.createElement("button");
+        fjern.type = "button";
+        fjern.className = "fjern";
+        fjern.textContent = "×";
+        fjern.title = "Fjern billedet";
+        fjern.setAttribute("aria-label", "Fjern billedet til " + o);
+        li.append(fjern);
+      }
+      return li;
+    }));
+  }
+
+  $("billedliste").addEventListener("click", e => {
+    const li = e.target.closest(".billedrække");
+    if (!li) return;
+    valgt = li.dataset.k;
+    if (e.target.closest(".fjern")) {
+      fjernBillede(valgt);
+    } else if (e.target.closest(".billedplads")) {
+      filmål = valgt;
+      $("filvalg").click();
+    }
+    opdater();
+  });
+  $("filvalg").addEventListener("change", e => {
+    const filer = [...e.target.files];
+    e.target.value = "";
+    placer(filer, filmål);
+  });
+  $("fjern-alle").addEventListener("click", () => {
+    if (!confirm("Vil du fjerne alle billederne? De kan ikke hentes igen.")) return;
+    billeder.clear();
+    billedVersion++;
+    dbKald("readwrite", s => s.clear()).catch(() => {});
+    opdater();
+  });
+
+  // Træk og slip. Filer, der slippes et forkert sted, må ikke åbne sig i fanen i stedet for siden.
+  function markér(li) {
+    document.querySelectorAll(".billedrække.over").forEach(r => { if (r !== li) r.classList.remove("over"); });
+    if (li) li.classList.add("over");
+  }
+  function trækMål(e) {
+    const el = e.target instanceof Element ? e.target : null;
+    const typer = [...(e.dataTransfer ? e.dataTransfer.types : [])];
+    const filer = typer.includes("Files");
+    const iListe = !!(el && el.closest(".vis"));
+    if (!filer && !(iListe && (typer.includes("text/uri-list") || typer.includes("text/html")))) return null;
+    const kan = billedFelt.checked && tavle.hidden && læsFagord().ord.length > 0;
+    return { kan, række: kan && el ? el.closest(".billedrække") : null };
+  }
+  document.addEventListener("dragover", e => {
+    const m = trækMål(e);
+    if (!m) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = m.kan ? "copy" : "none";
+    markér(m.række);
+  });
+  document.addEventListener("dragleave", e => { if (!e.relatedTarget) markér(null); });
+  document.addEventListener("drop", e => {
+    const m = trækMål(e);
+    markér(null);
+    if (!m) return;
+    e.preventDefault();
+    if (!m.kan) return;
+    const kilder = kilderFra(e.dataTransfer);
+    if (!kilder.length) { billedbesked("Det, du trak ind, var ikke et billede."); return; }
+    placer(kilder, m.række ? m.række.dataset.k : null);
+  });
+
+  // Ctrl+V med et kopieret billede: det går til det valgte fagord (eller det første uden billede), og bagefter
+  // bliver det næste fagord valgt, så man kan kopiere og sætte ind i træk.
+  document.addEventListener("paste", e => {
+    if (!billedFelt.checked || !tavle.hidden || !e.clipboardData) return;
+    const cd = e.clipboardData;
+    const filer = [...(cd.files || [])].filter(f => /^image\//.test(f.type));
+    if (!filer.length) return;
+    if (e.target === tekst && (cd.getData("text/plain") || "").trim()) return;   // tekst i fagordsfeltet
+    e.preventDefault();
+    placer(filer, valgt).then(k => {
+      if (!k) return;
+      const ord = læsFagord().ord.map(nøgle), i = ord.indexOf(k);
+      valgt = i >= 0 && i + 1 < ord.length ? ord[i + 1] : k;
+      opdater();
+    });
+  });
 
   // ----- Klokken ---------------------------------------------------------------------------
   // Klokken laves med Web Audio, så der ikke er nogen lydfil: to slag på en lille klokke med uharmoniske
@@ -448,7 +785,7 @@ html.tavle-åben { overflow: hidden; }
 
   function tilstand(t) {
     tavle.setAttribute("data-tilstand", t);
-    tavle.classList.remove("stille", "pauset", "sidste");
+    tavle.classList.remove("stille", "pauset", "sidste", "med-billede");
     clearTimeout(stilleUr);
   }
 
@@ -480,11 +817,14 @@ html.tavle-åben { overflow: hidden; }
     vågen = null;
   }
 
-  // Fagordet står så stort, som der er plads til, uden at et ord bliver delt.
+  // Fagordet står så stort, som der er plads til, uden at et ord bliver delt. Med et billede får fagordet
+  // pladsen under billedet.
   function tilpas() {
     if (tavle.getAttribute("data-tilstand") !== "koerer") return;
-    let str = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.28);
-    const højst = window.innerHeight * 0.62;
+    const medBillede = tavle.classList.contains("med-billede");
+    let str = medBillede ? Math.min(window.innerWidth * 0.1, window.innerHeight * 0.15)
+      : Math.min(window.innerWidth * 0.15, window.innerHeight * 0.28);
+    const højst = window.innerHeight * (medBillede ? 0.22 : 0.62);
     ordFelt.style.fontSize = str + "px";
     while (str > 20 && (ordFelt.scrollWidth > ordFelt.clientWidth + 1 || ordFelt.scrollHeight > højst)) {
       str *= 0.92;
@@ -513,6 +853,8 @@ html.tavle-åben { overflow: hidden; }
     const ord = læsFagord().ord;
     if (!ord.length) return;
     lyd();
+    // Billeder fra en anden hjemmeside hentes i forvejen, så de er klar, når fagordet kommer.
+    if (billedFelt.checked) ord.forEach(o => { const s = billeder.get(nøgle(o)); if (s && !/^data:/.test(s)) new Image().src = s; });
     st = { ord: blandFelt.checked ? bland(ord) : ord.slice(), i: 0, tid: værdier().tid };
     tilstand("koerer");
     tavle.focus({ preventScroll: true });
@@ -531,11 +873,16 @@ html.tavle-åben { overflow: hidden; }
     tavle.classList.remove("pauset", "sidste");
     $("pause").textContent = "Pause";
     ordFelt.textContent = st.ord[i];
+    const src = billedFelt.checked ? billeder.get(nøgle(st.ord[i])) : "";
+    tavle.classList.toggle("med-billede", !!src);
+    if (src) billedEl.src = src; else billedEl.removeAttribute("src");
     $("nr").textContent = (i + 1) + " / " + st.ord.length;
     tilpas();
-    ordFelt.classList.remove("nyt");
-    void ordFelt.offsetWidth;
-    ordFelt.classList.add("nyt");
+    [ordFelt, billedEl].forEach(el => {
+      el.classList.remove("nyt");
+      void el.offsetWidth;
+      el.classList.add("nyt");
+    });
     // Bjælken springer fuld ud uden at glide.
     fyld.style.transition = "none";
     fyld.style.transform = "scaleX(1)";
@@ -610,6 +957,10 @@ html.tavle-åben { overflow: hidden; }
       stilleUr = setTimeout(() => { tavle.classList.add("stille"); }, 2500);
     }
   }
+  // Kan et billede ikke vises (fx en adresse uden net), står fagordet alene.
+  billedEl.addEventListener("error", () => {
+    if (billedEl.getAttribute("src")) { tavle.classList.remove("med-billede"); tilpas(); }
+  });
   tavle.addEventListener("pointermove", vækMedStyring);
   tavle.addEventListener("pointerdown", vækMedStyring);
 
@@ -674,6 +1025,7 @@ html.tavle-åben { overflow: hidden; }
   });
 
   opdater();
+  hentBilleder().then(() => billedbesked(""));
 })();
 </script>
 </body>
