@@ -314,9 +314,12 @@
   // En plads på tegningen: feltet og navnet hver for sig, så alle navne kan tegnes oven på alle
   // felter (et langt navn må gerne gå lidt ind over nabopladsen). På skærmen får begge en
   // henvisning til navnet, så det kan byttes. opts.k er tekstens forstørrelse.
-  function seatSvg(shape, seat, cx, cy, maxW, fs, showGroup, opts){
+  // "open" er bordets tomme plads: en elev, der trækkes derhen, kommer med i bordets sidste makkerpar eller trio.
+  function seatSvg(shape, seat, cx, cy, maxW, fs, showGroup, opts, open){
     var k = opts.k || 1;
-    var attrs = (seat && opts.swappable) ? ' class="pseat" data-u="' + seat.ref + '" data-i="' + seat.i + '"' : '';
+    var attrs = '';
+    if(opts.swappable && seat) attrs = ' class="pseat" data-u="' + seat.ref + '" data-i="' + seat.i + '"';
+    else if(opts.swappable && open) attrs = ' class="pseat" data-u="' + open.ref + '" data-i="' + open.i + '" data-empty="1"';
     return {
       bg: '<g' + attrs + '>' + shape + '</g>',
       label: seat ? '<g' + attrs + '>' + seatLabelSvg(seat, cx, cy, maxW, r1(fs * k), showGroup, k) + '</g>' : ''
@@ -359,7 +362,7 @@
     ['a', 'b', 'c', 'd'].forEach(function(L){
       var r = FIRE_SEATS[L], s = bySeat[L];
       var shape = '<rect class="seat-bg" x="' + r.x + '" y="' + r.y + '" width="' + r.w + '" height="' + r.h + '" fill="' + (s ? s.tint : EMPTY_FILL) + '"/>';
-      var part = seatSvg(shape, s, r.x + r.w/2, r.y + r.h/2, r.w - 12, 17, false, opts);
+      var part = seatSvg(shape, s, r.x + r.w/2, r.y + r.h/2, r.w - 12, 17, false, opts, t.open);
       out += part.bg;
       labels += part.label;
     });
@@ -406,7 +409,7 @@
     ['a', 'b', 'c', 'd', 'e', 'f'].forEach(function(L){
       var p = HEX_SEATS[L], s = bySeat[L];
       var shape = '<polygon class="seat-bg" points="0,0 ' + p.sector[0].join(',') + ' ' + p.sector[1].join(',') + '" fill="' + (s ? s.tint : EMPTY_FILL) + '"/>';
-      var part = seatSvg(shape, s, p.text[0], p.text[1], p.maxW, 16, true, opts);
+      var part = seatSvg(shape, s, p.text[0], p.text[1], p.maxW, 16, true, opts, t.open);
       out += part.bg;
       labels += part.label;
     });
@@ -460,12 +463,17 @@
       });
       return seats;
     }
+    // Den tomme plads ved bordet hører til bordets sidste makkerpar eller trio, lige efter dets sidste navn.
+    function openSeat(units){
+      var last = units[units.length - 1];
+      return last ? { ref:last.ref, i:last.data.length } : null;
+    }
     if(room === 'hex'){
       return {
         room:room,
         tables: HEX_TABLES.map(function(def, k){
-          var table = l.hex[k];
-          return { no:k + 1, def:def, seats: fill(table ? table.units : []) };
+          var units = l.hex[k] ? l.hex[k].units : [];
+          return { no:k + 1, def:def, seats: fill(units), open: openSeat(units) };
         }),
         unseated:unseated
       };
@@ -475,7 +483,7 @@
       if(!b) return { no:k + 1, def:def, label:null, seats:[] };
       var units = b.pairs.map(function(p){ return { data:p, ref:'p' + g.pairsGroups.indexOf(p) }; });
       if(b.trio) units.push({ data:b.trio, ref:'t' + g.triplesGroups.indexOf(b.trio) });
-      return { no:k + 1, def:def, label:b.label, seats: fill(units) };
+      return { no:k + 1, def:def, label:b.label, seats: fill(units), open: openSeat(units) };
     });
     var withoutTable = g.bundles.slice(FIRE_TABLES.length);
     withoutTable.forEach(function(b){ unseated = unseated.concat(b.members); });
@@ -574,7 +582,10 @@
           var role = roleMap && roleMap[nm];
           cellHtml = (role ? '<span class="role-tag">' + escapeHtml(role) + '</span><br>' : '') + escapeHtml(nm);
         }
-        var attrs = (swappable && nm !== undefined) ? ' draggable="true" data-u="' + c.ref + '" data-i="' + r + '"' : '';
+        // En tom celle tager imod en elev, der så kommer med i netop det makkerpar eller den trio.
+        var attrs = !swappable ? ''
+          : nm !== undefined ? ' draggable="true" data-u="' + c.ref + '" data-i="' + r + '"'
+          : ' data-u="' + c.ref + '" data-i="' + c.names.length + '" data-empty="1"';
         html += '<td class="' + c.colorClass + '"' + attrs + '>' + cellHtml + '</td>';
       });
       html += '</tr>';

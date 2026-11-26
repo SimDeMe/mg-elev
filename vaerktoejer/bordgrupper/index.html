@@ -224,6 +224,7 @@
 
   /* Byt elever: træk et navn hen på et andet, eller klik på begge */
   [data-u]{cursor:grab; user-select:none;}
+  [data-u][data-empty], svg.plan .pseat[data-empty]{cursor:pointer;}
   [data-u].swap-selected{outline:3px solid #f59e0b; outline-offset:-3px;}
   [data-u].swap-over{outline:3px dashed var(--accent); outline-offset:-3px;}
   [data-u].swap-dragging{opacity:.45;}
@@ -1932,12 +1933,29 @@ Elev 28</textarea>
     if(!round || (a.u === b.u && a.i === b.i)) return;
     var g = round.groups;
     var listA = unitArray(g, a.u), listB = unitArray(g, b.u);
-    var tmp = listA[a.i];
-    listA[a.i] = listB[b.i];
-    listB[b.i] = tmp;
+    var emptyA = listA[a.i] === undefined, emptyB = listB[b.i] === undefined;
+    if(emptyA && emptyB) return;
+    if(emptyA || emptyB){
+      // En tom plads: eleven flytter derhen, og pladsen, eleven kom fra, bliver tom.
+      var from = emptyB ? a : b, to = emptyB ? b : a;
+      var fromList = emptyB ? listA : listB, toList = emptyB ? listB : listA;
+      var name = fromList.splice(from.i, 1)[0];
+      toList.push(name);
+      lastSwap = [{ u:to.u, i:toList.length - 1 }];
+    } else {
+      var tmp = listA[a.i];
+      listA[a.i] = listB[b.i];
+      listB[b.i] = tmp;
+      lastSwap = [{ u:a.u, i:a.i }, { u:b.u, i:b.i }];
+    }
     g.bundles.forEach(function(bundle){ bundle.members = bundleMembers(bundle); });
+    ['hex', 'row'].forEach(function(key){
+      round.layouts[key].forEach(function(t){
+        t.units.forEach(function(u){ u.size = u.data.length; });
+        t.size = t.units.reduce(function(sum, u){ return sum + u.size; }, 0);
+      });
+    });
     state.plan.swapped = true;
-    lastSwap = [{ u:a.u, i:a.i }, { u:b.u, i:b.i }];
     renderPlan();
   }
 
@@ -1984,7 +2002,7 @@ Elev 28</textarea>
   resultSection.addEventListener('pointerdown', function(e){
     if(e.button !== 0) return;
     var source = svgSeat(e.target);
-    if(!source) return;
+    if(!source || source.el.hasAttribute('data-empty')) return;
     e.preventDefault();
     planDrag = { source:source, x:e.clientX, y:e.clientY, moved:false };
   });
